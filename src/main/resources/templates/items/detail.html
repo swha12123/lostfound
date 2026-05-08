@@ -60,7 +60,7 @@
 
                 <div class="gallery-grid" th:if="${!item.imagePaths.isEmpty()}">
                     <div th:each="imgPath : ${item.imagePaths}" class="gallery-card">
-                        <img th:src="@{${imgPath}}" alt="분실물 사진" class="detail-image" />
+                        <img th:src="${imgPath}" alt="분실물 사진" class="detail-image" />
                     </div>
                 </div>
                 <div class="empty-state compact" th:if="${item.imagePaths.isEmpty()}">
