@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <title>승인 대기 목록</title>
+</head>
+<body>
+    <th:block th:replace="~{fragments/nav :: nav}"></th:block>
+    <main class="page-shell">
+        <div class="container narrow-container">
+            <section class="content-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Admin Queue</p>
+                        <h1>승인 대기 목록</h1>
+                    </div>
+                    <p class="section-description">카테고리와 현재 상태를 함께 보면서 승인하거나 삭제할 수 있습니다.</p>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(items)}">
+                    <strong>승인 대기 중인 글이 없습니다.</strong>
+                    <p>새로 등록된 게시글이 들어오면 이 화면에서 바로 확인할 수 있습니다.</p>
+                </div>
+
+                <ul class="pending-list" th:unless="${#lists.isEmpty(items)}">
+                    <li th:each="item : ${items}" th:id="'pending-item-' + ${item.id}" class="pending-item">
+                        <div class="pending-content">
+                            <div class="pending-main">
+                                <div class="badge-row">
+                                    <span class="category-pill" th:classappend="${item.categoryClass}" th:text="${item.categoryLabel}">카테고리</span>
+                                    <span class="status-pill" th:classappend="${item.statusClass}" th:text="${item.statusLabel}">상태</span>
+                                </div>
+                                <h3 th:text="${item.title}">제목</h3>
+                                <p th:text="${item.locationName}">장소</p>
+                                <span th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                            </div>
+                            <div class="pending-actions">
+                                <a th:href="@{/admin/items/{id}(id=${item.id})}" class="btn btn-secondary">미리보기</a>
+                                <button type="button" class="btn btn-primary" th:attr="data-approve-id=${item.id}" th:onclick="|approveItem(${item.id})|">승인</button>
+                                <form th:action="@{/admin/items/{id}/delete(id=${item.id})}" method="post" class="inline-form" onsubmit="return confirm('이 게시글을 삭제하시겠습니까?');">
+                                    <input type="hidden" name="source" value="pending" />
+                                    <button type="submit" class="btn btn-danger">삭제</button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <div id="empty-message" class="empty-state" style="display:none;">
+                    <strong>승인 대기 중인 글이 없습니다.</strong>
+                    <p>모든 게시글 검토가 완료되었습니다.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+</body>
+</html>

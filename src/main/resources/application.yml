@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: lostfound
+  config:
+    import: optional:classpath:application-local.yml
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+
+file:
+  upload-dir: ./uploads
+
+server:
+  port: 8085

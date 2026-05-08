@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <title>게시글 등록</title>
+</head>
+<body>
+    <th:block th:replace="~{fragments/nav :: nav}"></th:block>
+    <main class="page-shell">
+        <div class="container narrow-container">
+            <section class="content-card form-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Campus Post</p>
+                        <h1>게시글 등록</h1>
+                    </div>
+                    <p class="section-description">분실물을 제보할 수도 있고, 잃어버린 물건을 찾는 글도 작성할 수 있습니다.</p>
+                </div>
+
+                <div class="info-banner">
+                    <strong>기본 지도 위치는 중앙대학교 서울캠퍼스 310관입니다.</strong>
+                    <p>게시글 카테고리에 따라 기본 상태가 자동 설정됩니다. 분실물 제보는 ‘찾은 물건’, 분실물 찾기 글은 ‘찾고 있는 물건’으로 저장됩니다.</p>
+                </div>
+
+                <form th:action="@{/items}" th:object="${form}" method="post" enctype="multipart/form-data" class="form">
+                    <div class="field-group">
+                        <label>게시글 카테고리</label>
+                        <select th:field="*{category}">
+                            <option value="">카테고리를 선택해 주세요</option>
+                            <option th:each="category : ${categories}" th:value="${category}" th:text="${category.label}">카테고리</option>
+                        </select>
+                        <div th:errors="*{category}" class="error"></div>
+                    </div>
+
+                    <div class="field-group">
+                        <label>제목</label>
+                        <input type="text" th:field="*{title}" placeholder="예: 310관 앞에서 학생증을 주웠어요 / 검정 지갑을 찾고 있어요" required />
+                        <div th:errors="*{title}" class="error"></div>
+                    </div>
+
+                    <div class="field-group">
+                        <label>설명</label>
+                        <textarea th:field="*{description}" rows="5" placeholder="물건의 특징, 분실 시점, 보관 장소 등을 자세히 적어 주세요"></textarea>
+                        <div th:errors="*{description}" class="error"></div>
+                    </div>
+
+                    <div class="field-group">
+                        <label>위치 설명</label>
+                        <input type="text" th:field="*{locationName}" placeholder="예: 310관 1층 안내데스크 / 중앙도서관 앞 벤치" required />
+                        <div th:errors="*{locationName}" class="error"></div>
+                    </div>
+
+                    <input type="hidden" th:field="*{latitude}" id="latitude" />
+                    <input type="hidden" th:field="*{longitude}" id="longitude" />
+
+                    <div class="field-group">
+                        <label>지도에서 위치 선택</label>
+                        <p class="field-help">기본 중심은 중앙대 서울캠퍼스 310관이며, 클릭한 위치가 함께 저장됩니다.</p>
+                        <div class="map-frame"><div id="map" class="map-canvas"></div></div>
+                        <div class="coordinate-chip">좌표는 게시글 상세 화면에서 다시 확인할 수 있습니다.</div>
+                        <div th:errors="*{latitude}" class="error"></div>
+                        <div th:errors="*{longitude}" class="error"></div>
+                    </div>
+
+                    <div class="field-group">
+                        <label>사진 (jpg, jpeg, png, gif)</label>
+                        <input type="file" name="imageFile" accept="image/*" />
+                        <div th:if="${fileError}" class="error" th:text="${fileError}"></div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">등록하기</button>
+                        <a th:href="@{/items/list}" class="btn btn-secondary">목록 보기</a>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:inline="javascript">
+        const campusLat = 37.5052;
+        const campusLng = 126.9571;
+        const savedLat = [[${form.latitude}]];
+        const savedLng = [[${form.longitude}]];
+        const hasSavedPoint = savedLat !== null && savedLng !== null;
+        const map = L.map('map').setView(hasSavedPoint ? [savedLat, savedLng] : [campusLat, campusLng], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+        let marker = null;
+        if (hasSavedPoint) {
+            marker = L.marker([savedLat, savedLng]).addTo(map);
+        }
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker([lat, lng]).addTo(map);
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
+        });
+    </script>
+</body>
+</html>

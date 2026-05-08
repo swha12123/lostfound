@@ -1,0 +1,8 @@
+/build/
+/.gradle/
+/.idea/
+/.run/
+/uploads/
+*.log
+
+src/main/resources/application-local.yml

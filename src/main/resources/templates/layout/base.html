@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <th:block th:replace="fragments/header :: header"></th:block>
+    <title layout:title-pattern="$DECORATOR_TITLE - $CONTENT_TITLE">Lost &amp; Found</title>
+</head>
+<body>
+    <th:block th:replace="fragments/nav :: nav"></th:block>
+
+    <div class="container" style="margin-top: 20px;">
+        <div layout:fragment="content">
+            <!-- 콘텐츠 영역 -->
+        </div>
+    </div>
+
+    <th:block th:replace="fragments/footer :: footer"></th:block>
+</body>
+</html>

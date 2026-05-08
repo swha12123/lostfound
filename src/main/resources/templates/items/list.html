@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <title>캠퍼스 내 분실물 찾기</title>
+</head>
+<body>
+    <th:block th:replace="~{fragments/nav :: nav}"></th:block>
+    <main class="page-shell">
+        <div class="container page-stack">
+            <section class="overview-panel content-card"
+                     th:style="|--searching:${stats.totalCount == 0 ? 0 : stats.searchingCount * 100.0 / stats.totalCount};--found:${stats.totalCount == 0 ? 0 : stats.foundCount * 100.0 / stats.totalCount};--resolved:${stats.totalCount == 0 ? 0 : stats.resolvedCount * 100.0 / stats.totalCount};|">
+                <div class="overview-layout">
+                    <div class="overview-main">
+                        <div class="overview-copy">
+                            <p class="eyebrow">CAU LOST & FOUND BOARD</p>
+                            <h1>캠퍼스 내 분실물 찾기</h1>
+                            <p class="overview-text">중앙대학교 서울캠퍼스에서 주운 물건과 찾고 있는 물건을 분리해서 보고, 현재 주인 확인 상태까지 한눈에 확인할 수 있도록 정리한 게시판입니다.</p>
+                        </div>
+
+                        <form th:action="@{/items/list}" method="get" class="search-form overview-search">
+                            <input type="text" name="q" th:value="${keyword}" placeholder="제목으로 검색해 보세요." />
+                            <button type="submit" class="btn btn-primary">검색</button>
+                        </form>
+
+                        <div class="stat-inline-grid">
+                            <article class="stat-inline-card">
+                                <span class="stat-label">찾고 있는 물건</span>
+                                <strong th:text="${stats.searchingCount}">0</strong>
+                                <p>분실물을 찾고 있는 게시글</p>
+                            </article>
+                            <article class="stat-inline-card">
+                                <span class="stat-label">찾은 물건</span>
+                                <strong th:text="${stats.foundCount}">0</strong>
+                                <p>발견되어 등록된 물건</p>
+                            </article>
+                            <article class="stat-inline-card">
+                                <span class="stat-label">주인 찾은 물건</span>
+                                <strong th:text="${stats.resolvedCount}">0</strong>
+                                <p>주인에게 돌아간 물건</p>
+                            </article>
+                        </div>
+                    </div>
+
+                    <aside class="chart-panel">
+                        <div class="donut-chart">
+                            <div class="donut-center">
+                                <strong th:text="${stats.totalCount}">0</strong>
+                                <span>전체 게시글</span>
+                            </div>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <div class="legend-label-wrap"><span class="legend-dot legend-searching"></span><em>찾고 있는 물건</em></div>
+                                <strong class="legend-value" th:text="${stats.searchingCount}">0</strong>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-label-wrap"><span class="legend-dot legend-found"></span><em>찾은 물건</em></div>
+                                <strong class="legend-value" th:text="${stats.foundCount}">0</strong>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-label-wrap"><span class="legend-dot legend-resolved"></span><em>주인 찾은 물건</em></div>
+                                <strong class="legend-value" th:text="${stats.resolvedCount}">0</strong>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            <section class="board-grid">
+                <article class="board-card content-card">
+                    <div class="board-header">
+                        <div>
+                            <p class="eyebrow">REPORT BOARD</p>
+                            <h2>분실물 제보 게시판</h2>
+                        </div>
+                        <span class="board-count" th:text="|${reportPageData.totalElements}건|">0건</span>
+                    </div>
+                    <p class="board-description">교내에서 발견한 물건을 제보하는 글을 모아둔 공간입니다.</p>
+
+                    <div class="empty-state compact" th:if="${#lists.isEmpty(reportItems)}">
+                        <strong>등록된 제보 글이 없습니다.</strong>
+                        <p>승인된 분실물 제보가 생기면 이 게시판에 표시됩니다.</p>
+                    </div>
+
+                    <ul class="board-list" th:unless="${#lists.isEmpty(reportItems)}">
+                        <li th:each="item : ${reportItems}" class="board-item">
+                            <a th:href="@{/items/{id}(id=${item.id})}" class="board-link">
+                                <div class="board-item-head">
+                                    <span class="status-pill" th:classappend="${item.statusClass}" th:text="${item.statusLabel}">상태</span>
+                                    <span class="item-date" th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
+                                </div>
+                                <h3 th:text="${item.title}">게시글 제목</h3>
+                                <p th:text="${item.locationName}">위치 설명</p>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <nav class="board-pagination" th:if="${reportPageData.totalPages > 1}">
+                        <span class="page-link disabled" th:unless="${reportPageData.hasPrevious()}">이전</span>
+                        <a class="page-link"
+                           th:if="${reportPageData.hasPrevious()}"
+                           th:href="@{/items/list(q=${keyword}, reportPage=${reportPageData.number - 1}, searchPage=${searchPageData.number})}">이전</a>
+
+                        <th:block th:each="pageNumber : ${#numbers.sequence(0, reportPageData.totalPages - 1)}">
+                            <span class="page-link active" th:if="${pageNumber == reportPageData.number}" th:text="${pageNumber + 1}">1</span>
+                            <a class="page-link"
+                               th:unless="${pageNumber == reportPageData.number}"
+                               th:href="@{/items/list(q=${keyword}, reportPage=${pageNumber}, searchPage=${searchPageData.number})}"
+                               th:text="${pageNumber + 1}">1</a>
+                        </th:block>
+
+                        <span class="page-link disabled" th:unless="${reportPageData.hasNext()}">다음</span>
+                        <a class="page-link"
+                           th:if="${reportPageData.hasNext()}"
+                           th:href="@{/items/list(q=${keyword}, reportPage=${reportPageData.number + 1}, searchPage=${searchPageData.number})}">다음</a>
+                    </nav>
+                </article>
+
+                <article class="board-card content-card board-card-search">
+                    <div class="board-header">
+                        <div>
+                            <p class="eyebrow">SEARCH BOARD</p>
+                            <h2>분실물 찾기 게시판</h2>
+                        </div>
+                        <span class="board-count" th:text="|${searchPageData.totalElements}건|">0건</span>
+                    </div>
+                    <p class="board-description">잃어버린 물건을 찾고 있는 글만 따로 모아서 보여줍니다.</p>
+
+                    <div class="empty-state compact" th:if="${#lists.isEmpty(searchItems)}">
+                        <strong>등록된 찾기 글이 없습니다.</strong>
+                        <p>승인된 분실물 찾기 글이 생기면 이 게시판에 표시됩니다.</p>
+                    </div>
+
+                    <ul class="board-list" th:unless="${#lists.isEmpty(searchItems)}">
+                        <li th:each="item : ${searchItems}" class="board-item">
+                            <a th:href="@{/items/{id}(id=${item.id})}" class="board-link">
+                                <div class="board-item-head">
+                                    <span class="status-pill" th:classappend="${item.statusClass}" th:text="${item.statusLabel}">상태</span>
+                                    <span class="item-date" th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
+                                </div>
+                                <h3 th:text="${item.title}">게시글 제목</h3>
+                                <p th:text="${item.locationName}">위치 설명</p>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <nav class="board-pagination" th:if="${searchPageData.totalPages > 1}">
+                        <span class="page-link disabled" th:unless="${searchPageData.hasPrevious()}">이전</span>
+                        <a class="page-link"
+                           th:if="${searchPageData.hasPrevious()}"
+                           th:href="@{/items/list(q=${keyword}, reportPage=${reportPageData.number}, searchPage=${searchPageData.number - 1})}">이전</a>
+
+                        <th:block th:each="pageNumber : ${#numbers.sequence(0, searchPageData.totalPages - 1)}">
+                            <span class="page-link active" th:if="${pageNumber == searchPageData.number}" th:text="${pageNumber + 1}">1</span>
+                            <a class="page-link"
+                               th:unless="${pageNumber == searchPageData.number}"
+                               th:href="@{/items/list(q=${keyword}, reportPage=${reportPageData.number}, searchPage=${pageNumber})}"
+                               th:text="${pageNumber + 1}">1</a>
+                        </th:block>
+
+                        <span class="page-link disabled" th:unless="${searchPageData.hasNext()}">다음</span>
+                        <a class="page-link"
+                           th:if="${searchPageData.hasNext()}"
+                           th:href="@{/items/list(q=${keyword}, reportPage=${reportPageData.number}, searchPage=${searchPageData.number + 1})}">다음</a>
+                    </nav>
+                </article>
+            </section>
+        </div>
+    </main>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+</body>
+</html>
