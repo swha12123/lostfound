@@ -398,8 +398,18 @@ textarea { min-height: 150px; resize: vertical; }
     border-radius: 14px;
     background: rgba(255,255,255,.92);
     border: 1px solid rgba(15,76,129,.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.detail-image { width: 100%; height: 260px; object-fit: cover; border-radius: 10px; }
+.detail-image {
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: rgba(15, 76, 129, 0.04);
+}
 .description-box {
     max-width: 760px;
     padding: 0;
@@ -570,7 +580,7 @@ textarea { min-height: 150px; resize: vertical; }
     .brand-text small { display: none; }
     .donut-chart { width: 210px; height: 210px; }
     .donut-chart::after { width: 118px; height: 118px; }
-    .detail-image { height: 220px; }
+    .detail-image { max-height: 320px; }
     .map-canvas { height: 300px; }
 }
 .leaflet-container,

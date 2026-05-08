@@ -37,9 +37,9 @@
                             <div class="pending-actions">
                                 <a th:href="@{/admin/items/{id}(id=${item.id})}" class="btn btn-secondary">미리보기</a>
                                 <button type="button" class="btn btn-primary" th:attr="data-approve-id=${item.id}" th:onclick="|approveItem(${item.id})|">승인</button>
-                                <form th:action="@{/admin/items/{id}/delete(id=${item.id})}" method="post" class="inline-form" onsubmit="return confirm('이 게시글을 삭제하시겠습니까?');">
+                                <form th:action="@{/admin/items/{id}/delete(id=${item.id})}" method="post" class="inline-form" onsubmit="return confirm('이 게시글을 삭제하시겠습니까?');" data-single-submit>
                                     <input type="hidden" name="source" value="pending" />
-                                    <button type="submit" class="btn btn-danger">삭제</button>
+                                    <button type="submit" class="btn btn-danger" data-loading-text="삭제 중...">삭제</button>
                                 </form>
                             </div>
                         </div>

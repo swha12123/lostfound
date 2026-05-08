@@ -17,8 +17,8 @@
             <li><a th:href="@{/items/new}">등록하기</a></li>
             <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/pending}">승인 대기</a></li>
             <li sec:authorize="isAuthenticated()">
-                <form th:action="@{/logout}" method="post" class="logout-form">
-                    <button type="submit" class="logout-button">로그아웃</button>
+                <form th:action="@{/logout}" method="post" class="logout-form" data-single-submit>
+                    <button type="submit" class="logout-button" data-loading-text="로그아웃 중...">로그아웃</button>
                 </form>
             </li>
             <li sec:authorize="!isAuthenticated()"><a th:href="@{/login}">로그인</a></li>

@@ -10,7 +10,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
@@ -32,8 +37,12 @@ public class AdminController {
     @ResponseBody
     public ResponseEntity<String> approveItemAjax(@PathVariable Long id,
                                                   @AuthenticationPrincipal UserDetails userDetails) {
-        lostItemService.approveItem(id, userDetails.getUsername());
-        return ResponseEntity.ok("승인되었습니다.");
+        try {
+            lostItemService.approveItem(id, userDetails.getUsername());
+            return ResponseEntity.ok("승인 처리되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok("이미 처리된 요청입니다.");
+        }
     }
 
     @GetMapping("/items/{id}")
@@ -46,21 +55,30 @@ public class AdminController {
 
     @PostMapping("/items/{id}/toggle-resolved")
     public String toggleResolved(@PathVariable Long id) {
-        lostItemService.toggleResolved(id);
+        try {
+            lostItemService.toggleResolved(id);
+        } catch (IllegalArgumentException ignored) {
+        }
         return "redirect:/items/" + id;
     }
 
     @PostMapping("/items/{itemId}/comments/{commentId}/delete")
     public String deleteComment(@PathVariable Long itemId,
                                 @PathVariable Long commentId) {
-        lostItemService.deleteComment(itemId, commentId);
+        try {
+            lostItemService.deleteComment(itemId, commentId);
+        } catch (IllegalArgumentException ignored) {
+        }
         return "redirect:/admin/items/" + itemId;
     }
 
     @PostMapping("/items/{id}/delete")
     public String deleteItem(@PathVariable Long id,
                              @RequestParam(defaultValue = "pending") String source) {
-        lostItemService.deleteItem(id);
+        try {
+            lostItemService.deleteItem(id);
+        } catch (IllegalArgumentException ignored) {
+        }
         if ("detail".equals(source)) {
             return "redirect:/items/list";
         }

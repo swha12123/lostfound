@@ -1,4 +1,4 @@
-﻿function getCsrfToken() {
+function getCsrfToken() {
     const tokenMeta = document.querySelector('meta[name="_csrf"]');
     const headerMeta = document.querySelector('meta[name="_csrf_header"]');
     if (!tokenMeta || !headerMeta) {
@@ -10,7 +10,43 @@
     };
 }
 
+const pendingApprovals = new Set();
+
+function initSingleSubmitForms() {
+    document.querySelectorAll('form[data-single-submit]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            if (form.dataset.submitting === 'true') {
+                event.preventDefault();
+                return;
+            }
+
+            const submitter = event.submitter;
+            window.setTimeout(() => {
+                if (event.defaultPrevented || event.returnValue === false || form.dataset.submitting === 'true') {
+                    return;
+                }
+
+                form.dataset.submitting = 'true';
+                form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((element) => {
+                    element.disabled = true;
+                });
+
+                if (submitter instanceof HTMLButtonElement) {
+                    submitter.textContent = submitter.dataset.loadingText || '처리 중...';
+                } else if (submitter instanceof HTMLInputElement) {
+                    submitter.value = submitter.dataset.loadingText || '처리 중...';
+                }
+            }, 0);
+        });
+    });
+}
+
 async function approveItem(itemId) {
+    if (pendingApprovals.has(itemId)) {
+        return;
+    }
+
+    pendingApprovals.add(itemId);
     const csrf = getCsrfToken();
     const headers = {};
     if (csrf) {
@@ -48,6 +84,7 @@ async function approveItem(itemId) {
             }
         }, 220);
     } catch (error) {
+        pendingApprovals.delete(itemId);
         if (approveButton) {
             approveButton.disabled = false;
             approveButton.textContent = '승인';
@@ -55,3 +92,5 @@ async function approveItem(itemId) {
         alert('승인 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
 }
+
+document.addEventListener('DOMContentLoaded', initSingleSubmitForms);

@@ -40,9 +40,11 @@
                             <form th:if="${item.approved}"
                                   th:action="@{/admin/items/{id}/toggle-resolved(id=${item.id})}"
                                   method="post"
-                                  class="inline-form">
+                                  class="inline-form"
+                                  data-single-submit>
                                 <button type="submit"
                                         class="btn btn-secondary"
+                                        data-loading-text="처리 중..."
                                         th:text="${item.resolved} ? '진행 상태로 되돌리기' : '주인 찾은 게시글로 변경'">
                                     상태 변경
                                 </button>
@@ -50,9 +52,10 @@
                             <form th:action="@{/admin/items/{id}/delete(id=${item.id})}"
                                   method="post"
                                   class="inline-form"
-                                  onsubmit="return confirm('이 게시글을 삭제하시겠습니까?');">
+                                  onsubmit="return confirm('이 게시글을 삭제하시겠습니까?');"
+                                  data-single-submit>
                                 <input type="hidden" name="source" value="detail" />
-                                <button type="submit" class="btn btn-danger">게시글 삭제</button>
+                                <button type="submit" class="btn btn-danger" data-loading-text="삭제 중...">게시글 삭제</button>
                             </form>
                         </div>
                     </div>
@@ -116,8 +119,9 @@
                                           th:action="@{/admin/items/{itemId}/comments/{commentId}/delete(itemId=${item.id}, commentId=${comment.id})}"
                                           method="post"
                                           class="inline-form"
-                                          onsubmit="return confirm('이 댓글을 관리자 권한으로 삭제하시겠습니까?');">
-                                        <button type="submit" class="btn btn-danger btn-inline">관리자 삭제</button>
+                                          onsubmit="return confirm('이 댓글을 관리자 권한으로 삭제하시겠습니까?');"
+                                          data-single-submit>
+                                        <button type="submit" class="btn btn-danger btn-inline" data-loading-text="삭제 중...">관리자 삭제</button>
                                     </form>
                                 </div>
                             </div>
@@ -125,31 +129,36 @@
                             <form th:action="@{/items/{itemId}/comments/{commentId}/delete(itemId=${item.id}, commentId=${comment.id})}"
                                   method="post"
                                   class="comment-delete-form"
-                                  onsubmit="return confirm('이 댓글을 삭제하시겠습니까?');">
+                                  onsubmit="return confirm('이 댓글을 삭제하시겠습니까?');"
+                                  data-single-submit>
                                 <input type="password" name="commentPassword" placeholder="댓글 비밀번호" class="comment-password-input" />
-                                <button type="submit" class="btn btn-secondary btn-inline">댓글 삭제</button>
+                                <button type="submit" class="btn btn-secondary btn-inline" data-loading-text="삭제 중...">댓글 삭제</button>
                             </form>
                         </li>
                     </ul>
 
-                    <form th:action="@{/items/{id}/comments(id=${item.id})}" th:object="${commentForm}" method="post" class="comment-form">
+                    <form th:action="@{/items/{id}/comments(id=${item.id})}"
+                          th:object="${commentForm}"
+                          method="post"
+                          class="comment-form"
+                          data-single-submit>
                         <div class="field-group">
                             <label>작성자</label>
-                            <input type="text" th:field="*{authorName}" placeholder="닉네임을 입력해 주세요." />
+                            <input type="text" th:field="*{authorName}" placeholder="닉네임을 입력해 주세요" />
                             <div th:errors="*{authorName}" class="error"></div>
                         </div>
                         <div class="field-group">
                             <label>댓글 내용</label>
-                            <textarea th:field="*{content}" rows="4" placeholder="추가 제보나 위치 정보를 댓글로 남겨 주세요."></textarea>
+                            <textarea th:field="*{content}" rows="4" placeholder="추가 제보나 위치 정보를 댓글로 남겨 주세요"></textarea>
                             <div th:errors="*{content}" class="error"></div>
                         </div>
                         <div class="field-group">
                             <label>댓글 비밀번호</label>
-                            <input type="password" th:field="*{commentPassword}" placeholder="댓글 삭제 시 사용할 비밀번호" />
+                            <input type="password" th:field="*{commentPassword}" placeholder="댓글 삭제 때 사용할 비밀번호" />
                             <div th:errors="*{commentPassword}" class="error"></div>
                         </div>
                         <div class="form-actions comment-action-row">
-                            <button type="submit" class="btn btn-primary">댓글 등록</button>
+                            <button type="submit" class="btn btn-primary" data-loading-text="등록 중...">댓글 등록</button>
                             <a th:href="@{/items/list}" class="btn btn-secondary">목록으로</a>
                         </div>
                     </form>
@@ -157,7 +166,7 @@
 
                 <div class="empty-state compact" th:unless="${item.approved}">
                     <strong>댓글 기능은 승인된 게시글에서만 열립니다.</strong>
-                    <p>승인 후에는 일반 이용자도 댓글을 남길 수 있습니다.</p>
+                    <p>승인 이후에는 일반 이용자도 댓글을 남길 수 있습니다.</p>
                 </div>
             </section>
         </div>

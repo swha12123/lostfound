@@ -180,6 +180,9 @@ public class LostItemService {
         Member admin = memberRepository.findByUsername(adminUsername)
                 .orElseThrow(() -> new IllegalArgumentException("관리자 정보를 찾을 수 없습니다."));
         LostItem item = getItem(itemId);
+        if (item.isApproved()) {
+            return;
+        }
         item.approve(admin);
     }
 
