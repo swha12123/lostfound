@@ -2,6 +2,7 @@ package com.example.lostfound.domain.entity;
 
 import com.example.lostfound.domain.enums.LostItemCategory;
 import com.example.lostfound.domain.enums.LostItemStatus;
+import org.hibernate.annotations.BatchSize;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +14,14 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "lost_item")
+@Table(
+        name = "lost_item",
+        indexes = {
+                @Index(name = "idx_lost_item_approved_created", columnList = "is_approved, created_at"),
+                @Index(name = "idx_lost_item_approved_category_created", columnList = "is_approved, category, created_at"),
+                @Index(name = "idx_lost_item_approved_status", columnList = "is_approved, status")
+        }
+)
 public class LostItem {
 
     @Id
@@ -52,10 +60,12 @@ public class LostItem {
 
     @OneToMany(mappedBy = "lostItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
+    @BatchSize(size = 50)
     private List<LostItemImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "lostItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
+    @BatchSize(size = 50)
     private List<Comment> comments = new ArrayList<>();
 
     public static LostItem create(LostItemCategory category, String title, String description,

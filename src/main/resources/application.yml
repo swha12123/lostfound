@@ -6,10 +6,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+        default_batch_fetch_size: 50
   servlet:
     multipart:
       max-file-size: 10MB
@@ -17,7 +18,7 @@ spring:
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
-    cache: false
+    cache: true
   cloud:
     aws:
       s3:

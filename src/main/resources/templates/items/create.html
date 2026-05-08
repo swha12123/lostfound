@@ -19,10 +19,11 @@
 
                 <div class="info-banner">
                     <strong>기본 지도 위치는 중앙대학교 서울캠퍼스 310관입니다.</strong>
-                    <p>게시글 카테고리에 따라 기본 상태가 자동 설정됩니다. 분실물 제보는 ‘찾은 물건’, 분실물 찾기 글은 ‘찾고 있는 물건’으로 저장됩니다.</p>
+                    <p>게시글 카테고리에 따라 기본 상태가 자동 설정됩니다. 분실물 제보는 ‘습득한 물건’, 분실물 찾기 글은 ‘찾고 있는 물건’으로 저장됩니다.</p>
                 </div>
 
-                <form th:action="@{/items}" th:object="${form}" method="post" enctype="multipart/form-data" class="form">
+                <form th:action="@{/items}" th:object="${form}" method="post" enctype="multipart/form-data" class="form" id="item-create-form">
+                    <input type="hidden" name="createToken" th:value="${createToken}" />
                     <div class="field-group">
                         <label>게시글 카테고리</label>
                         <select th:field="*{category}">
@@ -69,7 +70,7 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">등록하기</button>
+                        <button type="submit" class="btn btn-primary" id="item-create-submit">등록하기</button>
                         <a th:href="@{/items/list}" class="btn btn-secondary">목록 보기</a>
                     </div>
                 </form>
@@ -99,6 +100,20 @@
             document.getElementById('latitude').value = lat.toFixed(6);
             document.getElementById('longitude').value = lng.toFixed(6);
         });
+        const createForm = document.getElementById('item-create-form');
+        const submitButton = document.getElementById('item-create-submit');
+        let isSubmitting = false;
+        if (createForm && submitButton) {
+            createForm.addEventListener('submit', function(event) {
+                if (isSubmitting) {
+                    event.preventDefault();
+                    return;
+                }
+                isSubmitting = true;
+                submitButton.disabled = true;
+                submitButton.textContent = '등록 중...';
+            });
+        }
     </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ import com.example.lostfound.dto.LostItemDetailDto;
 import com.example.lostfound.dto.LostItemListDto;
 import com.example.lostfound.service.LostItemService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
@@ -19,10 +20,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.WebUtils;
+
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
 public class ItemController {
+
+    private static final String CREATE_ITEM_TOKEN_SESSION_KEY = "createItemToken";
 
     private final LostItemService lostItemService;
 
@@ -51,9 +57,9 @@ public class ItemController {
     }
 
     @GetMapping("/items/new")
-    public String createForm(Model model) {
+    public String createForm(Model model, HttpSession session) {
         model.addAttribute("form", new LostItemCreateForm());
-        model.addAttribute("categories", LostItemCategory.values());
+        populateCreateModel(model, session);
         return "items/create";
     }
 
@@ -61,17 +67,25 @@ public class ItemController {
     public String create(@Valid @ModelAttribute("form") LostItemCreateForm form,
                          BindingResult bindingResult,
                          @RequestParam("imageFile") MultipartFile imageFile,
-                         Model model) {
+                         @RequestParam("createToken") String createToken,
+                         Model model,
+                         HttpSession session) {
         model.addAttribute("categories", LostItemCategory.values());
 
         if (bindingResult.hasErrors()) {
+            keepOrRefreshCreateToken(model, session, createToken);
             return "items/create";
+        }
+
+        if (!consumeCreateToken(session, createToken)) {
+            return "redirect:/items/list";
         }
 
         try {
             lostItemService.createAnonymousItem(form, imageFile);
         } catch (IllegalArgumentException e) {
             model.addAttribute("fileError", e.getMessage());
+            issueCreateToken(model, session);
             return "items/create";
         }
         return "redirect:/items/list";
@@ -115,6 +129,45 @@ public class ItemController {
     @GetMapping("/login")
     public String loginPage() {
         return "auth/login";
+    }
+
+    private void populateCreateModel(Model model, HttpSession session) {
+        model.addAttribute("categories", LostItemCategory.values());
+        issueCreateToken(model, session);
+    }
+
+    private void issueCreateToken(Model model, HttpSession session) {
+        String token = UUID.randomUUID().toString();
+        synchronized (WebUtils.getSessionMutex(session)) {
+            session.setAttribute(CREATE_ITEM_TOKEN_SESSION_KEY, token);
+        }
+        model.addAttribute("createToken", token);
+    }
+
+    private void keepOrRefreshCreateToken(Model model, HttpSession session, String createToken) {
+        if (hasCurrentCreateToken(session, createToken)) {
+            model.addAttribute("createToken", createToken);
+            return;
+        }
+        issueCreateToken(model, session);
+    }
+
+    private boolean hasCurrentCreateToken(HttpSession session, String createToken) {
+        synchronized (WebUtils.getSessionMutex(session)) {
+            Object storedToken = session.getAttribute(CREATE_ITEM_TOKEN_SESSION_KEY);
+            return storedToken instanceof String token && token.equals(createToken);
+        }
+    }
+
+    private boolean consumeCreateToken(HttpSession session, String createToken) {
+        synchronized (WebUtils.getSessionMutex(session)) {
+            Object storedToken = session.getAttribute(CREATE_ITEM_TOKEN_SESSION_KEY);
+            if (!(storedToken instanceof String token) || !token.equals(createToken)) {
+                return false;
+            }
+            session.removeAttribute(CREATE_ITEM_TOKEN_SESSION_KEY);
+            return true;
+        }
     }
 
     private void populateListModel(String keyword, int reportPage, int searchPage, Model model) {
