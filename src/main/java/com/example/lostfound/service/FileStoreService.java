@@ -32,8 +32,8 @@ public class FileStoreService {
 
     public FileStoreService(
             S3Client s3Client,
-            @Value("${app.s3.bucket}") String bucketName,
-            @Value("${spring.cloud.aws.s3.region}") String region,
+            @Value("${app.s3.bucket:lostfoundstorage}") String bucketName,
+            @Value("${spring.cloud.aws.s3.region:us-east-1}") String region,
             @Value("${file.upload-dir:./uploads}") String uploadDirPath
     ) {
         this.s3Client = s3Client;
