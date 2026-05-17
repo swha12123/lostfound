@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum LostItemStatus {
-    SEARCHING("찾고 있는 물건"),
-    FOUND("습득한 물건"),
-    RESOLVED("주인 찾은 물건");
+    SEARCHING("주인 찾는 중"),
+    FOUND("보관 중"),
+    RESOLVED("반환 완료");
 
     private final String label;
 }
