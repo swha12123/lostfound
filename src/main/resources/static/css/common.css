@@ -293,8 +293,25 @@ textarea { min-height: 150px; resize: vertical; }
 .full-width { width: 100%; }
 .inline-form { margin: 0; }
 
-.search-form { display: flex; gap: 12px; }
-.search-form input { flex: 1; }
+.search-form {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+.search-form input {
+    flex: 1 1 320px;
+    min-width: 0;
+}
+.search-form select {
+    flex: 0 0 240px;
+    width: 240px;
+    min-width: 240px;
+}
+.search-form .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
 .result-count { margin: 0 0 16px; color: var(--text-sub); font-weight: 600; }
 .item-list, .pending-list, .comment-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; }
 .item-card, .pending-item {
@@ -316,7 +333,7 @@ textarea { min-height: 150px; resize: vertical; }
 .item-headline, .detail-header { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
 .simple-headline h3, .pending-item h3, .description-box h3 { margin: 0; }
 .badge-row { gap: 8px; }
-.category-pill, .status-pill, .meta-pill, .coordinate-chip {
+.category-pill, .item-type-pill, .status-pill, .meta-pill, .coordinate-chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -329,6 +346,14 @@ textarea { min-height: 150px; resize: vertical; }
 .category-pill { background: rgba(15,76,129,.08); color: var(--brand-deep); border-color: rgba(15, 76, 129, 0.1); }
 .category-report { background: rgba(15,76,129,.1); color: var(--brand-deep); }
 .category-search { background: rgba(224,164,88,.12); color: #9b5c12; border-color: rgba(215, 158, 82, 0.22); }
+.item-type-pill { background: rgba(95,108,128,.08); color: var(--text-main); border-color: rgba(95,108,128,.14); }
+.item-type-wallet { background: rgba(34, 139, 230, 0.12); color: #0b5cab; border-color: rgba(34, 139, 230, 0.22); }
+.item-type-electronics { background: rgba(103, 58, 183, 0.12); color: #5b2fa0; border-color: rgba(103, 58, 183, 0.22); }
+.item-type-id-card { background: rgba(13, 148, 136, 0.12); color: #0f766e; border-color: rgba(13, 148, 136, 0.22); }
+.item-type-bag { background: rgba(217, 119, 6, 0.12); color: #b45309; border-color: rgba(217, 119, 6, 0.22); }
+.item-type-clothing { background: rgba(220, 38, 127, 0.12); color: #be185d; border-color: rgba(220, 38, 127, 0.22); }
+.item-type-keys { background: rgba(22, 163, 74, 0.12); color: #15803d; border-color: rgba(22, 163, 74, 0.22); }
+.item-type-other { background: rgba(100, 116, 139, 0.12); color: #475569; border-color: rgba(100, 116, 139, 0.22); }
 .status-pill { white-space: nowrap; }
 .status-searching { background: #eef2ff; color: #2b46ba; border-color: #b8c5ff; }
 .status-found { background: #e8f7ee; color: #1d7743; border-color: #9fd3b3; }
@@ -371,7 +396,11 @@ textarea { min-height: 150px; resize: vertical; }
 .map-frame { padding: 10px; border-radius: 14px; background: rgba(15,76,129,.06); border: 1px solid rgba(15,76,129,.1); }
 .map-canvas { width: 100%; height: 360px; border-radius: 12px; overflow: hidden; }
 .detail-map { height: 320px; }
+.list-map { height: 430px; }
 .coordinate-chip { margin-top: 12px; background: rgba(255,255,255,.85); border-color: rgba(15,76,129,.1); color: var(--text-sub); }
+.map-popup strong { display: inline-block; margin-bottom: 4px; }
+.map-popup span { color: var(--text-sub); font-size: .92rem; line-height: 1.5; }
+.map-popup a { display: inline-block; margin-top: 6px; color: var(--brand); font-weight: 700; text-decoration: none; }
 
 .detail-card {
     display: grid;
@@ -556,6 +585,12 @@ textarea { min-height: 150px; resize: vertical; }
     .comment-action-row .btn,
     .search-form .btn {
         flex: 1;
+    }
+    .search-form input,
+    .search-form select {
+        flex: 1 1 100%;
+        width: 100%;
+        min-width: 0;
     }
     .stat-inline-grid { grid-template-columns: 1fr; }
     .item-link { flex-direction: column; }

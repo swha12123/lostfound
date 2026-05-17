@@ -2,9 +2,10 @@ package com.example.lostfound.domain.entity;
 
 import com.example.lostfound.domain.enums.LostItemCategory;
 import com.example.lostfound.domain.enums.LostItemStatus;
-import org.hibernate.annotations.BatchSize;
+import com.example.lostfound.domain.enums.LostItemType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -19,7 +20,8 @@ import java.util.List;
         indexes = {
                 @Index(name = "idx_lost_item_approved_created", columnList = "is_approved, created_at"),
                 @Index(name = "idx_lost_item_approved_category_created", columnList = "is_approved, category, created_at"),
-                @Index(name = "idx_lost_item_approved_status", columnList = "is_approved, status")
+                @Index(name = "idx_lost_item_approved_status", columnList = "is_approved, status"),
+                @Index(name = "idx_lost_item_item_type", columnList = "item_type")
         }
 )
 public class LostItem {
@@ -33,6 +35,10 @@ public class LostItem {
     private LostItemCategory category;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private LostItemType itemType;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private LostItemStatus status;
 
@@ -43,6 +49,10 @@ public class LostItem {
     private String description;
 
     private String locationName;
+
+    @Column(length = 100)
+    private String contactInfo;
+
     private Double latitude;
     private Double longitude;
 
@@ -68,14 +78,16 @@ public class LostItem {
     @BatchSize(size = 50)
     private List<Comment> comments = new ArrayList<>();
 
-    public static LostItem create(LostItemCategory category, String title, String description,
-                                  String locationName, Double latitude, Double longitude) {
+    public static LostItem create(LostItemCategory category, LostItemType itemType, String title, String description,
+                                  String locationName, String contactInfo, Double latitude, Double longitude) {
         LostItem item = new LostItem();
         item.setCategory(category);
+        item.setItemType(itemType);
         item.setStatus(category.getDefaultStatus());
         item.setTitle(title);
         item.setDescription(description);
         item.setLocationName(locationName);
+        item.setContactInfo(contactInfo);
         item.setLatitude(latitude);
         item.setLongitude(longitude);
         return item;

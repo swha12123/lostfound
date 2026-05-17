@@ -3,6 +3,7 @@ package com.example.lostfound.domain.repository;
 import com.example.lostfound.domain.entity.LostItem;
 import com.example.lostfound.domain.enums.LostItemCategory;
 import com.example.lostfound.domain.enums.LostItemStatus;
+import com.example.lostfound.domain.enums.LostItemType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +23,7 @@ public interface LostItemRepository extends JpaRepository<LostItem, Long> {
             from LostItem li
             where li.approved = true
               and li.category = :category
+              and (:itemType is null or li.itemType = :itemType)
               and (:keyword is null or li.title like concat('%', :keyword, '%'))
             order by case
                          when li.status = com.example.lostfound.domain.enums.LostItemStatus.RESOLVED then 1
@@ -30,6 +32,7 @@ public interface LostItemRepository extends JpaRepository<LostItem, Long> {
                      li.createdAt desc
             """)
     Page<LostItem> findApprovedPageByCategory(@Param("category") LostItemCategory category,
+                                              @Param("itemType") LostItemType itemType,
                                               @Param("keyword") String keyword,
                                               Pageable pageable);
 }

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:replace="~{fragments/header :: header}"></th:block>
@@ -14,23 +14,33 @@
                         <p class="eyebrow">Campus Post</p>
                         <h1>게시글 등록</h1>
                     </div>
-                    <p class="section-description">분실물을 제보할 수도 있고, 잃어버린 물건을 찾는 글도 작성할 수 있습니다.</p>
+                    <p class="section-description">분실물을 제보하거나, 잃어버린 물건을 찾는 글을 작성할 수 있습니다.</p>
                 </div>
 
                 <div class="info-banner">
                     <strong>기본 지도 위치는 중앙대학교 서울캠퍼스 310관입니다.</strong>
-                    <p>게시글 카테고리에 따라 기본 상태가 자동 설정됩니다. 분실물 제보는 ‘습득한 물건’, 분실물 찾기 글은 ‘찾고 있는 물건’으로 저장됩니다.</p>
+                    <p>게시판 종류와 물품 카테고리를 함께 선택하면 물품별로 구분해서 확인할 수 있습니다.</p>
                 </div>
 
                 <form th:action="@{/items}" th:object="${form}" method="post" enctype="multipart/form-data" class="form" id="item-create-form">
                     <input type="hidden" name="createToken" th:value="${createToken}" />
+
                     <div class="field-group">
                         <label>게시글 카테고리</label>
                         <select th:field="*{category}">
-                            <option value="">카테고리를 선택해 주세요</option>
+                            <option value="">카테고리를 선택해 주세요.</option>
                             <option th:each="category : ${categories}" th:value="${category}" th:text="${category.label}">카테고리</option>
                         </select>
                         <div th:errors="*{category}" class="error"></div>
+                    </div>
+
+                    <div class="field-group">
+                        <label>물품 카테고리</label>
+                        <select th:field="*{itemType}">
+                            <option value="">물품 카테고리를 선택해 주세요.</option>
+                            <option th:each="itemType : ${itemTypes}" th:value="${itemType}" th:text="${itemType.label}">물품 카테고리</option>
+                        </select>
+                        <div th:errors="*{itemType}" class="error"></div>
                     </div>
 
                     <div class="field-group">
@@ -41,7 +51,7 @@
 
                     <div class="field-group">
                         <label>설명</label>
-                        <textarea th:field="*{description}" rows="5" placeholder="물건의 특징, 분실 시점, 보관 장소 등을 자세히 적어 주세요"></textarea>
+                        <textarea th:field="*{description}" rows="5" placeholder="물건의 특징, 분실 시점, 보관 장소 등을 자세히 적어 주세요."></textarea>
                         <div th:errors="*{description}" class="error"></div>
                     </div>
 
@@ -51,16 +61,22 @@
                         <div th:errors="*{locationName}" class="error"></div>
                     </div>
 
+                    <div class="field-group">
+                        <label>연락처</label>
+                        <input type="text" th:field="*{contactInfo}" placeholder="예: 010-1234-5678 / 카카오톡 ID / 오픈채팅 링크" />
+                        <p class="field-help">연락처는 로그인한 사용자에게만 상세 화면에서 표시됩니다.</p>
+                        <div class="error" id="contact-info-error" th:text="${#fields.hasErrors('contactInfo') ? #fields.errors('contactInfo')[0] : ''}"></div>
+                    </div>
+
                     <input type="hidden" th:field="*{latitude}" id="latitude" />
                     <input type="hidden" th:field="*{longitude}" id="longitude" />
 
                     <div class="field-group">
                         <label>지도에서 위치 선택</label>
-                        <p class="field-help">기본 중심은 중앙대 서울캠퍼스 310관이며, 클릭한 위치가 함께 저장됩니다.</p>
+                        <p class="field-help">기본 중심은 중앙대학교 서울캠퍼스 310관이며, 클릭한 위치가 게시글 좌표로 저장됩니다.</p>
                         <div class="map-frame"><div id="map" class="map-canvas"></div></div>
                         <div class="coordinate-chip">좌표는 게시글 상세 화면에서 다시 확인할 수 있습니다.</div>
-                        <div th:errors="*{latitude}" class="error"></div>
-                        <div th:errors="*{longitude}" class="error"></div>
+                        <div class="error" id="coordinate-error" th:text="${#fields.hasErrors('latitude') ? #fields.errors('latitude')[0] : (#fields.hasErrors('longitude') ? #fields.errors('longitude')[0] : '')}"></div>
                     </div>
 
                     <div class="field-group">
@@ -85,23 +101,52 @@
         const savedLng = [[${form.longitude}]];
         const hasSavedPoint = savedLat !== null && savedLng !== null;
         const map = L.map('map').setView(hasSavedPoint ? [savedLat, savedLng] : [campusLat, campusLng], 17);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
         let marker = null;
         if (hasSavedPoint) {
             marker = L.marker([savedLat, savedLng]).addTo(map);
         }
+
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        const contactInfoInput = document.getElementById('contactInfo');
+        const contactInfoError = document.getElementById('contact-info-error');
+        const coordinateError = document.getElementById('coordinate-error');
+        const createForm = document.getElementById('item-create-form');
+        const submitButton = document.getElementById('item-create-submit');
+
+        const clearError = (element) => {
+            if (element) {
+                element.textContent = '';
+            }
+        };
+
         map.on('click', function(e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
+
             if (marker) {
                 map.removeLayer(marker);
             }
+
             marker = L.marker([lat, lng]).addTo(map);
-            document.getElementById('latitude').value = lat.toFixed(6);
-            document.getElementById('longitude').value = lng.toFixed(6);
+            latitudeInput.value = lat.toFixed(6);
+            longitudeInput.value = lng.toFixed(6);
+            clearError(coordinateError);
         });
-        const createForm = document.getElementById('item-create-form');
-        const submitButton = document.getElementById('item-create-submit');
+
+        if (contactInfoInput) {
+            contactInfoInput.addEventListener('input', function() {
+                if (contactInfoInput.value.trim()) {
+                    clearError(contactInfoError);
+                }
+            });
+        }
+
         let isSubmitting = false;
         if (createForm && submitButton) {
             createForm.addEventListener('submit', function(event) {
@@ -109,6 +154,27 @@
                     event.preventDefault();
                     return;
                 }
+
+                clearError(contactInfoError);
+                clearError(coordinateError);
+
+                let hasClientError = false;
+
+                if (contactInfoInput && !contactInfoInput.value.trim()) {
+                    contactInfoError.textContent = '연락처를 입력해 주세요.';
+                    hasClientError = true;
+                }
+
+                if (latitudeInput && longitudeInput && (!latitudeInput.value || !longitudeInput.value)) {
+                    coordinateError.textContent = '지도에서 위치를 선택해 주세요.';
+                    hasClientError = true;
+                }
+
+                if (hasClientError) {
+                    event.preventDefault();
+                    return;
+                }
+
                 isSubmitting = true;
                 submitButton.disabled = true;
                 submitButton.textContent = '등록 중...';

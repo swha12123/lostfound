@@ -1,6 +1,7 @@
 package com.example.lostfound.dto;
 
 import com.example.lostfound.domain.enums.LostItemCategory;
+import com.example.lostfound.domain.enums.LostItemType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -14,16 +15,26 @@ public class LostItemCreateForm {
     @NotNull(message = "게시글 카테고리를 선택해 주세요.")
     private LostItemCategory category;
 
-    @NotBlank(message = "제목은 필수입니다.")
+    @NotNull(message = "물품 카테고리를 선택해 주세요.")
+    private LostItemType itemType;
+
+    @NotBlank(message = "제목을 입력해 주세요.")
     @Size(max = 100, message = "제목은 100자 이하로 입력해 주세요.")
     private String title;
 
     @Size(max = 2000, message = "설명은 2000자 이하로 입력해 주세요.")
     private String description;
 
-    @NotBlank(message = "위치 설명은 필수입니다.")
+    @NotBlank(message = "위치 설명을 입력해 주세요.")
     private String locationName;
 
+    @NotBlank(message = "연락처를 입력해 주세요.")
+    @Size(max = 100, message = "연락처는 100자 이하로 입력해 주세요.")
+    private String contactInfo;
+
+    @NotNull(message = "지도에서 위치를 선택해 주세요.")
     private Double latitude;
+
+    @NotNull(message = "지도에서 위치를 선택해 주세요.")
     private Double longitude;
 }

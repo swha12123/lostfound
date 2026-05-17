@@ -1,15 +1,18 @@
 package com.example.lostfound.controller;
 
 import com.example.lostfound.domain.enums.LostItemCategory;
+import com.example.lostfound.domain.enums.LostItemType;
 import com.example.lostfound.dto.CommentCreateForm;
 import com.example.lostfound.dto.LostItemCreateForm;
 import com.example.lostfound.dto.LostItemDetailDto;
 import com.example.lostfound.dto.LostItemListDto;
 import com.example.lostfound.service.LostItemService;
-import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -17,12 +20,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.WebUtils;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Controller
 @RequiredArgsConstructor
@@ -34,19 +38,21 @@ public class ItemController {
 
     @GetMapping("/")
     public String index(@RequestParam(required = false) String q,
+                        @RequestParam(required = false) LostItemType itemType,
                         @RequestParam(defaultValue = "0") int reportPage,
                         @RequestParam(defaultValue = "0") int searchPage,
                         Model model) {
-        populateListModel(q, reportPage, searchPage, model);
+        populateListModel(q, itemType, reportPage, searchPage, model);
         return "items/list";
     }
 
     @GetMapping("/items/list")
     public String list(@RequestParam(required = false) String q,
+                       @RequestParam(required = false) LostItemType itemType,
                        @RequestParam(defaultValue = "0") int reportPage,
                        @RequestParam(defaultValue = "0") int searchPage,
                        Model model) {
-        populateListModel(q, reportPage, searchPage, model);
+        populateListModel(q, itemType, reportPage, searchPage, model);
         return "items/list";
     }
 
@@ -71,6 +77,7 @@ public class ItemController {
                          Model model,
                          HttpSession session) {
         model.addAttribute("categories", LostItemCategory.values());
+        model.addAttribute("itemTypes", LostItemType.values());
 
         if (bindingResult.hasErrors()) {
             keepOrRefreshCreateToken(model, session, createToken);
@@ -95,6 +102,7 @@ public class ItemController {
     public String addComment(@PathVariable Long id,
                              @Valid @ModelAttribute("commentForm") CommentCreateForm commentForm,
                              BindingResult bindingResult,
+                             @AuthenticationPrincipal UserDetails userDetails,
                              Model model) {
         if (bindingResult.hasErrors()) {
             populatePublicDetailModel(id, model, commentForm);
@@ -102,7 +110,7 @@ public class ItemController {
         }
 
         try {
-            lostItemService.addComment(id, commentForm);
+            lostItemService.addComment(id, userDetails.getUsername(), commentForm);
             return "redirect:/items/" + id;
         } catch (IllegalArgumentException e) {
             model.addAttribute("commentError", e.getMessage());
@@ -112,12 +120,12 @@ public class ItemController {
     }
 
     @PostMapping("/items/{itemId}/comments/{commentId}/delete")
-    public String deleteCommentByPassword(@PathVariable Long itemId,
-                                          @PathVariable Long commentId,
-                                          @RequestParam(defaultValue = "") String commentPassword,
-                                          Model model) {
+    public String deleteComment(@PathVariable Long itemId,
+                                @PathVariable Long commentId,
+                                @AuthenticationPrincipal UserDetails userDetails,
+                                Model model) {
         try {
-            lostItemService.deleteCommentByPassword(itemId, commentId, commentPassword);
+            lostItemService.deleteCommentByAuthor(itemId, commentId, userDetails.getUsername());
             return "redirect:/items/" + itemId;
         } catch (IllegalArgumentException e) {
             model.addAttribute("commentDeleteError", e.getMessage());
@@ -126,13 +134,9 @@ public class ItemController {
         }
     }
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "auth/login";
-    }
-
     private void populateCreateModel(Model model, HttpSession session) {
         model.addAttribute("categories", LostItemCategory.values());
+        model.addAttribute("itemTypes", LostItemType.values());
         issueCreateToken(model, session);
     }
 
@@ -170,15 +174,25 @@ public class ItemController {
         }
     }
 
-    private void populateListModel(String keyword, int reportPage, int searchPage, Model model) {
-        Page<LostItemListDto> reportPageData = lostItemService.getApprovedItemsByCategory(LostItemCategory.REPORT, keyword, reportPage);
-        Page<LostItemListDto> searchPageData = lostItemService.getApprovedItemsByCategory(LostItemCategory.SEARCH, keyword, searchPage);
+    private void populateListModel(String keyword,
+                                   LostItemType itemType,
+                                   int reportPage,
+                                   int searchPage,
+                                   Model model) {
+        Page<LostItemListDto> reportPageData = lostItemService.getApprovedItemsByCategory(LostItemCategory.REPORT, itemType, keyword, reportPage);
+        Page<LostItemListDto> searchPageData = lostItemService.getApprovedItemsByCategory(LostItemCategory.SEARCH, itemType, keyword, searchPage);
 
         model.addAttribute("reportPageData", reportPageData);
         model.addAttribute("searchPageData", searchPageData);
         model.addAttribute("reportItems", reportPageData.getContent());
         model.addAttribute("searchItems", searchPageData.getContent());
+        List<LostItemListDto> mapItems = Stream.concat(reportPageData.getContent().stream(), searchPageData.getContent().stream())
+                .filter(item -> item.getLatitude() != null && item.getLongitude() != null)
+                .toList();
+        model.addAttribute("mapItems", mapItems);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedItemType", itemType);
+        model.addAttribute("itemTypes", LostItemType.values());
         model.addAttribute("stats", lostItemService.getApprovedStatistics());
     }
 

@@ -1,4 +1,4 @@
-﻿<nav xmlns:th="http://www.thymeleaf.org"
+<nav xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      th:fragment="nav"
      class="navbar">
@@ -16,12 +16,13 @@
             <li><a th:href="@{/items/list}">목록</a></li>
             <li><a th:href="@{/items/new}">등록하기</a></li>
             <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/pending}">승인 대기</a></li>
+            <li sec:authorize="!isAuthenticated()"><a th:href="@{/login}">로그인</a></li>
+            <li sec:authorize="!isAuthenticated()"><a th:href="@{/signup}">회원가입</a></li>
             <li sec:authorize="isAuthenticated()">
                 <form th:action="@{/logout}" method="post" class="logout-form" data-single-submit>
                     <button type="submit" class="logout-button" data-loading-text="로그아웃 중...">로그아웃</button>
                 </form>
             </li>
-            <li sec:authorize="!isAuthenticated()"><a th:href="@{/login}">로그인</a></li>
         </ul>
     </div>
 </nav>

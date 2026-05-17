@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:replace="~{fragments/header :: header}"></th:block>
@@ -11,22 +11,27 @@
             <section class="content-card auth-card">
                 <div class="section-heading auth-heading">
                     <div>
-                        <p class="eyebrow">Administrator</p>
-                        <h1>관리자 로그인</h1>
+                        <p class="eyebrow">Member Login</p>
+                        <h1>로그인</h1>
                     </div>
-                    <p class="section-description">승인 대기 글을 확인하려면 관리자 계정으로 로그인해 주세요.</p>
+                    <p class="section-description">회원가입 후 로그인하면 연락처 확인과 댓글 작성이 가능합니다.</p>
                 </div>
                 <form th:action="@{/login}" method="post" class="form">
+                    <input type="hidden" name="redirect" th:value="${redirect}" />
                     <div class="field-group">
                         <label>아이디</label>
-                        <input type="text" name="username" placeholder="관리자 아이디" required />
+                        <input type="text" name="username" placeholder="아이디" required />
                     </div>
                     <div class="field-group">
                         <label>비밀번호</label>
                         <input type="password" name="password" placeholder="비밀번호" required />
                     </div>
                     <div th:if="${param.error}" class="error card-error">아이디 또는 비밀번호가 올바르지 않습니다.</div>
-                    <button type="submit" class="btn btn-primary full-width">로그인</button>
+                    <div th:if="${param.signupSuccess}" class="info-banner">회원가입이 완료되었습니다. 로그인해 주세요.</div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">로그인</button>
+                        <a th:href="@{/signup(redirect=${redirect})}" class="btn btn-secondary">회원가입</a>
+                    </div>
                 </form>
             </section>
         </div>

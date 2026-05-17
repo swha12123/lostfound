@@ -1,5 +1,6 @@
 package com.example.lostfound.dto;
 
+import com.example.lostfound.domain.enums.LostItemType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,12 +14,17 @@ public class LostItemDetailDto {
     private String title;
     private String description;
     private String locationName;
+    private String contactInfo;
     private Double latitude;
     private Double longitude;
     private boolean approved;
     private boolean resolved;
     private String categoryLabel;
     private String categoryClass;
+    private LostItemType itemType;
+    private String itemTypeLabel;
+    private String itemTypeClass;
+    private String itemTypeDescription;
     private String statusLabel;
     private String statusClass;
     private LocalDateTime createdAt;

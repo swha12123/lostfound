@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class CommentViewDto {
     private Long id;
     private String authorName;
+    private String authorUsername;
     private String content;
     private LocalDateTime createdAt;
 }

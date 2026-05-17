@@ -20,6 +20,10 @@ public class Comment {
     @JoinColumn(name = "lost_item_id")
     private LostItem lostItem;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_member_id")
+    private Member author;
+
     @Column(nullable = false, length = 30)
     private String authorName;
 
@@ -33,7 +37,8 @@ public class Comment {
     private LocalDateTime createdAt;
 
     @Builder
-    public Comment(String authorName, String content, String commentPassword) {
+    public Comment(Member author, String authorName, String content, String commentPassword) {
+        this.author = author;
         this.authorName = authorName;
         this.content = content;
         this.commentPassword = commentPassword;
