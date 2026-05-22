@@ -3,6 +3,8 @@ package com.example.lostfound.strategy.itemtype;
 import com.example.lostfound.domain.enums.LostItemType;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class IdCardItemTypeStrategy implements LostItemTypeStrategy {
 
@@ -24,5 +26,10 @@ public class IdCardItemTypeStrategy implements LostItemTypeStrategy {
     @Override
     public String markerColorHex() {
         return "#0d9488";
+    }
+
+    @Override
+    public List<String> searchKeywords() {
+        return List.of("신분증", "학생증", "주민등록증", "운전면허증", "카드", "체크카드", "신용카드", "id", "card");
     }
 }

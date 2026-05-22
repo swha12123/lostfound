@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.WebUtils;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.UUID;
@@ -75,7 +76,8 @@ public class ItemController {
                          @RequestParam("imageFile") MultipartFile imageFile,
                          @RequestParam("createToken") String createToken,
                          Model model,
-                         HttpSession session) {
+                         HttpSession session,
+                         RedirectAttributes redirectAttributes) {
         model.addAttribute("categories", LostItemCategory.values());
         model.addAttribute("itemTypes", LostItemType.values());
 
@@ -89,7 +91,10 @@ public class ItemController {
         }
 
         try {
-            lostItemService.createAnonymousItem(form, imageFile);
+            var result = lostItemService.createAnonymousItem(form, imageFile);
+            if (result.warningMessage() != null) {
+                redirectAttributes.addFlashAttribute("postCreateWarning", result.warningMessage());
+            }
         } catch (IllegalArgumentException e) {
             model.addAttribute("fileError", e.getMessage());
             issueCreateToken(model, session);

@@ -85,7 +85,7 @@ public class FileStoreService {
             s3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (S3Exception | SdkClientException | IOException e) {
             log.error("Failed to upload image to S3 bucket {}", bucketName, e);
-            throw new IllegalArgumentException("이미지 업로드에 실패했습니다. S3 설정을 확인해 주세요.", e);
+            throw new ImageUploadFailedException("이미지 업로드에 실패했습니다. S3 설정을 확인해 주세요.", e);
         }
 
         String imagePath = "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + storedFileName;

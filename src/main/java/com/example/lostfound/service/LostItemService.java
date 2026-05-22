@@ -21,12 +21,15 @@ import com.example.lostfound.dto.LostItemStatisticsDto;
 import com.example.lostfound.strategy.itemtype.LostItemTypeStrategy;
 import com.example.lostfound.strategy.itemtype.LostItemTypeStrategyResolver;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +41,7 @@ import java.util.stream.Collectors;
 public class LostItemService {
 
     private static final int BOARD_PAGE_SIZE = 5;
+    private static final Logger log = LoggerFactory.getLogger(LostItemService.class);
 
     private final LostItemRepository lostItemRepository;
     private final LostItemImageRepository lostItemImageRepository;
@@ -47,41 +51,47 @@ public class LostItemService {
     private final LostItemTypeStrategyResolver lostItemTypeStrategyResolver;
 
     @Transactional
-    public Long createAnonymousItem(LostItemCreateForm form, MultipartFile imageFile) {
+    public ItemCreateResult createAnonymousItem(LostItemCreateForm form, MultipartFile imageFile) {
         LostItem item = LostItem.create(
                 form.getCategory(),
                 form.getItemType(),
                 form.getTitle(),
                 form.getDescription(),
                 form.getLocationName(),
-                form.getContactInfo(),
+                normalizePhoneNumber(form.getContactInfo()),
                 form.getLatitude(),
                 form.getLongitude()
         );
 
         lostItemRepository.save(item);
+        String warningMessage = null;
 
         if (imageFile != null && !imageFile.isEmpty()) {
-            String[] storeResult = fileStoreService.storeFile(imageFile);
-            LostItemImage image = LostItemImage.builder()
-                    .originalFileName(imageFile.getOriginalFilename())
-                    .storedFileName(storeResult[0])
-                    .imagePath(storeResult[1])
-                    .build();
-            item.addImage(image);
-            lostItemImageRepository.save(image);
+            try {
+                String[] storeResult = fileStoreService.storeFile(imageFile);
+                LostItemImage image = LostItemImage.builder()
+                        .originalFileName(imageFile.getOriginalFilename())
+                        .storedFileName(storeResult[0])
+                        .imagePath(storeResult[1])
+                        .build();
+                item.addImage(image);
+                lostItemImageRepository.save(image);
+            } catch (ImageUploadFailedException e) {
+                log.warn("Image upload failed for item {}, saving text-only post instead.", item.getId(), e);
+                warningMessage = "이미지 업로드에 실패했지만 텍스트 기반 게시글은 등록되었습니다.";
+            }
         }
 
-        return item.getId();
+        return new ItemCreateResult(item.getId(), warningMessage);
     }
 
     public List<LostItemListDto> getApprovedItems(String keyword) {
         String normalizedKeyword = normalizeKeyword(keyword);
-        List<LostItem> items;
-        if (normalizedKeyword == null) {
-            items = lostItemRepository.findByApprovedTrueOrderByIdDesc();
-        } else {
-            items = lostItemRepository.findByApprovedTrueAndTitleContainingOrderByIdDesc(normalizedKeyword);
+        List<LostItem> items = lostItemRepository.findByApprovedTrueOrderByIdDesc();
+        if (normalizedKeyword != null) {
+            items = items.stream()
+                    .filter(item -> matchesKeywordByStrategy(item, normalizedKeyword))
+                    .toList();
         }
         return items.stream().map(this::toListDto).collect(Collectors.toList());
     }
@@ -91,8 +101,17 @@ public class LostItemService {
                                                             String keyword,
                                                             int page) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), BOARD_PAGE_SIZE);
-        return lostItemRepository.findApprovedPageByCategory(category, itemType, normalizeKeyword(keyword), pageable)
-                .map(this::toListDto);
+        String normalizedKeyword = normalizeKeyword(keyword);
+        if (normalizedKeyword == null) {
+            return lostItemRepository.findApprovedPageByCategory(category, itemType, pageable)
+                    .map(this::toListDto);
+        }
+
+        List<LostItem> filteredItems = lostItemRepository.findApprovedListByCategory(category, itemType).stream()
+                .filter(item -> matchesKeywordByStrategy(item, normalizedKeyword))
+                .toList();
+
+        return toListDtoPage(filteredItems, pageable);
     }
 
     public LostItemStatisticsDto getApprovedStatistics() {
@@ -135,7 +154,7 @@ public class LostItemService {
                 .title(item.getTitle())
                 .description(item.getDescription())
                 .locationName(item.getLocationName())
-                .contactInfo(item.getContactInfo())
+                .contactInfo(normalizePhoneNumber(item.getContactInfo()))
                 .latitude(item.getLatitude())
                 .longitude(item.getLongitude())
                 .approved(item.isApproved())
@@ -302,5 +321,39 @@ public class LostItemService {
 
     private LostItemType resolveItemType(LostItemType itemType) {
         return itemType != null ? itemType : LostItemType.OTHER;
+    }
+
+    private boolean matchesKeywordByStrategy(LostItem item, String keyword) {
+        LostItemType itemType = resolveItemType(item.getItemType());
+        LostItemTypeStrategy strategy = lostItemTypeStrategyResolver.resolve(itemType);
+        return strategy.matchesKeyword(item, keyword);
+    }
+
+    private Page<LostItemListDto> toListDtoPage(List<LostItem> items, Pageable pageable) {
+        int start = Math.toIntExact(pageable.getOffset());
+        if (start >= items.size()) {
+            return new PageImpl<>(List.of(), pageable, items.size());
+        }
+
+        int end = Math.min(start + pageable.getPageSize(), items.size());
+        List<LostItemListDto> content = items.subList(start, end).stream()
+                .map(this::toListDto)
+                .toList();
+        return new PageImpl<>(content, pageable, items.size());
+    }
+
+    private String normalizePhoneNumber(String contactInfo) {
+        if (contactInfo == null) {
+            return null;
+        }
+
+        String trimmed = contactInfo.trim();
+        String digitsOnly = trimmed.replaceAll("\\D", "");
+        if (digitsOnly.matches("010\\d{8}")) {
+            return digitsOnly.substring(0, 3) + "-"
+                    + digitsOnly.substring(3, 7) + "-"
+                    + digitsOnly.substring(7);
+        }
+        return trimmed;
     }
 }

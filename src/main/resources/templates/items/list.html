@@ -10,6 +10,9 @@
         <div class="container page-stack">
             <section class="overview-panel content-card"
                      th:style="|--searching:${stats.totalCount == 0 ? 0 : stats.searchingCount * 100.0 / stats.totalCount};--found:${stats.totalCount == 0 ? 0 : stats.foundCount * 100.0 / stats.totalCount};--resolved:${stats.totalCount == 0 ? 0 : stats.resolvedCount * 100.0 / stats.totalCount};|">
+                <div class="info-banner" th:if="${postCreateWarning}">
+                    <strong th:text="${postCreateWarning}">이미지 업로드 경고</strong>
+                </div>
                 <div class="overview-layout">
                     <div class="overview-main">
                         <div class="overview-copy">

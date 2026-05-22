@@ -3,6 +3,8 @@ package com.example.lostfound.strategy.itemtype;
 import com.example.lostfound.domain.enums.LostItemType;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class OtherItemTypeStrategy implements LostItemTypeStrategy {
 
@@ -24,5 +26,10 @@ public class OtherItemTypeStrategy implements LostItemTypeStrategy {
     @Override
     public String markerColorHex() {
         return "#64748b";
+    }
+
+    @Override
+    public List<String> searchKeywords() {
+        return List.of("기타", "other", "misc");
     }
 }

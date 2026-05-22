@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LostItemCreateFormValidationTest {
@@ -39,5 +40,26 @@ class LostItemCreateFormValidationTest {
 
         assertTrue(fields.contains("latitude"));
         assertTrue(fields.contains("longitude"));
+    }
+
+    @Test
+    void validateRequiresPhoneNumberFormat() {
+        LostItemCreateForm form = new LostItemCreateForm();
+        form.setCategory(LostItemCategory.REPORT);
+        form.setItemType(LostItemType.WALLET);
+        form.setTitle("학생증을 주웠어요");
+        form.setDescription("310관 앞에서 발견");
+        form.setLocationName("310관 앞");
+        form.setContactInfo("01012345678");
+        form.setLatitude(37.5052);
+        form.setLongitude(126.9571);
+
+        Set<ConstraintViolation<LostItemCreateForm>> violations = validator.validate(form);
+        Set<String> fields = violations.stream()
+                .map(violation -> violation.getPropertyPath().toString())
+                .collect(Collectors.toSet());
+
+        assertTrue(fields.contains("contactInfo"));
+        assertFalse(violations.isEmpty());
     }
 }

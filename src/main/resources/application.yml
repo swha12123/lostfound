@@ -2,7 +2,7 @@ spring:
   application:
     name: lostfound
   config:
-    import: optional:file:./config/application-local.yml,optional:classpath:application-local.yml
+    import: optional:file:.env[.properties],optional:file:./config/application-local.yml,optional:classpath:application-local.yml
   jpa:
     hibernate:
       ddl-auto: update

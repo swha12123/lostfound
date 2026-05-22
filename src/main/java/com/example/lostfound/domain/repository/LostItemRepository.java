@@ -24,7 +24,6 @@ public interface LostItemRepository extends JpaRepository<LostItem, Long> {
             where li.approved = true
               and li.category = :category
               and (:itemType is null or li.itemType = :itemType)
-              and (:keyword is null or li.title like concat('%', :keyword, '%'))
             order by case
                          when li.status = com.example.lostfound.domain.enums.LostItemStatus.RESOLVED then 1
                          else 0
@@ -33,6 +32,20 @@ public interface LostItemRepository extends JpaRepository<LostItem, Long> {
             """)
     Page<LostItem> findApprovedPageByCategory(@Param("category") LostItemCategory category,
                                               @Param("itemType") LostItemType itemType,
-                                              @Param("keyword") String keyword,
                                               Pageable pageable);
+
+    @Query("""
+            select li
+            from LostItem li
+            where li.approved = true
+              and li.category = :category
+              and (:itemType is null or li.itemType = :itemType)
+            order by case
+                         when li.status = com.example.lostfound.domain.enums.LostItemStatus.RESOLVED then 1
+                         else 0
+                     end,
+                     li.createdAt desc
+            """)
+    List<LostItem> findApprovedListByCategory(@Param("category") LostItemCategory category,
+                                              @Param("itemType") LostItemType itemType);
 }

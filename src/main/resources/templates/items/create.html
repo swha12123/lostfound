@@ -62,9 +62,9 @@
                     </div>
 
                     <div class="field-group">
-                        <label>연락처</label>
-                        <input type="text" th:field="*{contactInfo}" placeholder="예: 010-1234-5678 / 카카오톡 ID / 오픈채팅 링크" />
-                        <p class="field-help">연락처는 로그인한 사용자에게만 상세 화면에서 표시됩니다.</p>
+                        <label>전화번호</label>
+                        <input type="text" th:field="*{contactInfo}" placeholder="예: 010-1234-5678" inputmode="numeric" autocomplete="tel" maxlength="13" />
+                        <p class="field-help">전화번호는 로그인한 사용자에게만 상세 화면에서 표시됩니다.</p>
                         <div class="error" id="contact-info-error" th:text="${#fields.hasErrors('contactInfo') ? #fields.errors('contactInfo')[0] : ''}"></div>
                     </div>
 
@@ -124,6 +124,17 @@
                 element.textContent = '';
             }
         };
+        const formatPhoneNumber = (value) => {
+            const digits = value.replace(/\D/g, '').slice(0, 11);
+            if (digits.length <= 3) {
+                return digits;
+            }
+            if (digits.length <= 7) {
+                return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+            }
+            return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+        };
+        const isValidPhoneNumber = (value) => /^010-\d{4}-\d{4}$/.test(value);
 
         map.on('click', function(e) {
             const lat = e.latlng.lat;
@@ -141,6 +152,7 @@
 
         if (contactInfoInput) {
             contactInfoInput.addEventListener('input', function() {
+                contactInfoInput.value = formatPhoneNumber(contactInfoInput.value);
                 if (contactInfoInput.value.trim()) {
                     clearError(contactInfoError);
                 }
@@ -161,7 +173,10 @@
                 let hasClientError = false;
 
                 if (contactInfoInput && !contactInfoInput.value.trim()) {
-                    contactInfoError.textContent = '연락처를 입력해 주세요.';
+                    contactInfoError.textContent = '전화번호를 입력해 주세요.';
+                    hasClientError = true;
+                } else if (contactInfoInput && !isValidPhoneNumber(contactInfoInput.value.trim())) {
+                    contactInfoError.textContent = '전화번호는 010-1234-5678 형식으로 입력해 주세요.';
                     hasClientError = true;
                 }
 
