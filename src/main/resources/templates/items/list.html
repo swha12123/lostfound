@@ -18,7 +18,7 @@
                         <div class="overview-copy">
                             <p class="eyebrow">CAU LOST & FOUND BOARD</p>
                             <h1>캠퍼스 내 분실물 찾기</h1>
-                            <p class="overview-text">게시판 종류와 물품 카테고리를 함께 관리해서, 현재 보관 중인 물건과 주인을 찾는 중인 물건을 물품별로 나눠 확인할 수 있습니다.</p>
+                            <p class="overview-text">카테고리 별 현재 보관중인 물건과 주인을 찾는 물품을 확인할 수 있습니다.</p>
                         </div>
 
                         <form th:action="@{/items/list}" method="get" class="search-form overview-search">
@@ -39,7 +39,7 @@
                             <article class="stat-inline-card">
                                 <span class="stat-label">주인 찾는 중</span>
                                 <strong th:text="${stats.searchingCount}">0</strong>
-                                <p>주인을 찾는 중인 게시글 수</p>
+                                <p>주인 찾는 중인<br>게시글 수</p>
                             </article>
                             <article class="stat-inline-card">
                                 <span class="stat-label">보관 중</span>

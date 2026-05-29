@@ -134,6 +134,10 @@ textarea { min-height: 150px; resize: vertical; }
     border-radius: 14px;
     background: var(--surface-muted);
     border: 1px solid rgba(15, 76, 129, 0.08);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px auto;
+    gap: 12px;
+    align-items: stretch;
 }
 
 .stat-inline-grid {
@@ -579,6 +583,9 @@ textarea { min-height: 150px; resize: vertical; }
     .comment-action-row,
     .search-form {
         width: 100%;
+    }
+    .overview-search {
+        grid-template-columns: 1fr;
     }
     .form-actions .btn,
     .pending-actions .btn,

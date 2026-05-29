@@ -104,6 +104,24 @@ public class LostItem {
         this.approvedAt = LocalDateTime.now();
     }
 
+    public void updateDetails(LostItemCategory category, LostItemType itemType, String title, String description,
+                              String locationName, String contactInfo, Double latitude, Double longitude) {
+        boolean categoryChanged = this.category != category;
+
+        this.category = category;
+        this.itemType = itemType;
+        this.title = title;
+        this.description = description;
+        this.locationName = locationName;
+        this.contactInfo = contactInfo;
+        this.latitude = latitude;
+        this.longitude = longitude;
+
+        if (categoryChanged && this.status != LostItemStatus.RESOLVED) {
+            this.status = category.getDefaultStatus();
+        }
+    }
+
     public void markResolved() {
         this.status = LostItemStatus.RESOLVED;
     }

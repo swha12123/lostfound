@@ -4,6 +4,7 @@ import com.example.lostfound.domain.entity.Comment;
 import com.example.lostfound.domain.entity.LostItem;
 import com.example.lostfound.domain.entity.Member;
 import com.example.lostfound.domain.enums.LostItemCategory;
+import com.example.lostfound.domain.enums.LostItemStatus;
 import com.example.lostfound.domain.enums.LostItemType;
 import com.example.lostfound.domain.enums.Role;
 import com.example.lostfound.domain.repository.CommentRepository;
@@ -13,6 +14,7 @@ import com.example.lostfound.domain.repository.MemberRepository;
 import com.example.lostfound.dto.LostItemCreateForm;
 import com.example.lostfound.dto.LostItemDetailDto;
 import com.example.lostfound.dto.LostItemListDto;
+import com.example.lostfound.dto.LostItemUpdateForm;
 import com.example.lostfound.strategy.itemtype.BagItemTypeStrategy;
 import com.example.lostfound.strategy.itemtype.ClothingItemTypeStrategy;
 import com.example.lostfound.strategy.itemtype.ElectronicsItemTypeStrategy;
@@ -232,6 +234,34 @@ class LostItemServiceTest {
         LostItemDetailDto detail = lostItemService.getItemDetail(31L);
 
         assertEquals("010-1234-5678", detail.getContactInfo());
+    }
+
+    @Test
+    void updateItemByAdminUpdatesFieldsAndAlignsStatusWhenCategoryChanges() {
+        LostItem item = approvedItem(41L, LostItemCategory.REPORT, LostItemType.WALLET,
+                "지갑 보관 중", "학생회관 앞에서 발견", "학생회관 앞");
+        LostItemUpdateForm form = new LostItemUpdateForm();
+        form.setCategory(LostItemCategory.SEARCH);
+        form.setItemType(LostItemType.ID_CARD);
+        form.setTitle("학생증을 찾고 있습니다");
+        form.setDescription("310관 근처에서 잃어버렸습니다.");
+        form.setLocationName("310관 앞");
+        form.setContactInfo("010-9876-5432");
+        form.setLatitude(37.5054);
+        form.setLongitude(126.9574);
+
+        when(lostItemRepository.findById(41L)).thenReturn(Optional.of(item));
+
+        lostItemService.updateItemByAdmin(41L, form);
+
+        assertEquals(LostItemCategory.SEARCH, item.getCategory());
+        assertEquals(LostItemType.ID_CARD, item.getItemType());
+        assertEquals("학생증을 찾고 있습니다", item.getTitle());
+        assertEquals("310관 앞", item.getLocationName());
+        assertEquals("010-9876-5432", item.getContactInfo());
+        assertEquals(37.5054, item.getLatitude());
+        assertEquals(126.9574, item.getLongitude());
+        assertEquals(LostItemStatus.SEARCHING, item.getStatus());
     }
 
     private ArgumentMatcher<LostItem> matchesForm(LostItemCreateForm form) {
