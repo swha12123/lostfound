@@ -1,0 +1,209 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <title>게시글 상세</title>
+</head>
+<body>
+    <th:block th:replace="~{fragments/nav :: nav}"></th:block>
+    <main class="page-shell">
+        <div class="container narrow-container page-stack">
+            <section class="content-card detail-card">
+                <div class="detail-header">
+                    <div>
+                        <p class="eyebrow">Post Detail</p>
+                        <h1 th:text="${item.title}">게시글 제목</h1>
+                    </div>
+                    <div class="badge-row detail-badges">
+                        <span class="category-pill" th:classappend="${item.categoryClass}" th:text="${item.categoryLabel}">게시판 카테고리</span>
+                        <span class="item-type-pill" th:classappend="${item.itemTypeClass}" th:text="${item.itemTypeLabel}">물품 카테고리</span>
+                        <span class="status-pill" th:classappend="${item.statusClass}" th:text="${item.statusLabel}">상태</span>
+                    </div>
+                </div>
+
+                <div class="meta-strip">
+                    <span class="meta-pill" th:text="${item.locationName}">위치 설명</span>
+                    <span class="meta-pill" th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
+                </div>
+
+                <div th:if="${adminMessage}" class="info-banner">
+                    <strong th:text="${adminMessage}">관리자 작업이 완료되었습니다.</strong>
+                </div>
+
+                <div class="description-box">
+                    <h3>물품 카테고리</h3>
+                    <p th:text="${item.itemTypeDescription}">물품 카테고리 설명</p>
+                </div>
+
+                <div class="description-box">
+                    <h3>연락처</h3>
+                    <div sec:authorize="isAuthenticated()">
+                        <p th:text="${item.contactInfo != null and !#strings.isEmpty(item.contactInfo) ? item.contactInfo : '등록된 연락처가 없습니다.'}">연락처</p>
+                    </div>
+                    <div sec:authorize="!isAuthenticated()" class="info-banner">
+                        <strong>연락처는 로그인 후 확인할 수 있습니다.</strong>
+                        <p>
+                            <a th:href="@{/login(redirect=${'/items/' + item.id})}">로그인</a>
+                            또는
+                            <a th:href="@{/signup(redirect=${'/items/' + item.id})}">회원가입</a>
+                            후 확인해 주세요.
+                        </p>
+                    </div>
+                </div>
+
+                <div sec:authorize="hasRole('ADMIN')" class="admin-toolbox">
+                    <div class="admin-tool-card">
+                        <strong>관리자 기능</strong>
+                        <p th:if="${item.approved}">게시글을 수정하거나, 상태를 변경하거나, 삭제할 수 있습니다.</p>
+                        <p th:unless="${item.approved}">승인 전 글은 수정과 삭제가 가능합니다. 승인 처리는 승인 대기 목록에서 진행해 주세요.</p>
+                        <div class="form-actions">
+                            <form th:if="${item.approved}"
+                                  th:action="@{/admin/items/{id}/toggle-resolved(id=${item.id})}"
+                                  method="post"
+                                  class="inline-form"
+                                  data-single-submit>
+                                <button type="submit"
+                                        class="btn btn-secondary"
+                                        data-loading-text="처리 중..."
+                                        th:text="${item.resolved} ? '기본 상태로 되돌리기' : '반환 완료 처리'">
+                                    상태 변경
+                                </button>
+                            </form>
+                            <a th:href="@{/admin/items/{id}/edit(id=${item.id})}" class="btn btn-primary">게시글 수정</a>
+                            <form th:action="@{/admin/items/{id}/delete(id=${item.id})}"
+                                  method="post"
+                                  class="inline-form"
+                                  onsubmit="return confirm('이 게시글을 삭제하시겠습니까?');"
+                                  data-single-submit>
+                                <input type="hidden" name="source" value="detail" />
+                                <button type="submit" class="btn btn-danger" data-loading-text="삭제 중...">게시글 삭제</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gallery-grid" th:if="${!item.imagePaths.isEmpty()}">
+                    <div th:each="imgPath : ${item.imagePaths}" class="gallery-card">
+                        <img th:src="${imgPath}" alt="분실물 사진" class="detail-image" />
+                    </div>
+                </div>
+                <div class="empty-state compact" th:if="${item.imagePaths.isEmpty()}">
+                    <strong>등록된 사진이 없습니다.</strong>
+                    <p>위치 설명과 게시글 내용을 함께 확인해 주세요.</p>
+                </div>
+
+                <div class="description-box">
+                    <h3>상세 설명</h3>
+                    <p th:text="${item.description != null and !#strings.isEmpty(item.description) ? item.description : '작성된 추가 설명이 없습니다.'}">상세 설명 내용</p>
+                </div>
+
+                <div class="map-section" th:if="${item.latitude != null and item.longitude != null}">
+                    <div class="section-heading compact-heading">
+                        <div>
+                            <p class="eyebrow">Map</p>
+                            <h3>위치 확인</h3>
+                        </div>
+                    </div>
+                    <div class="map-frame">
+                        <div id="map" class="map-canvas detail-map"></div>
+                    </div>
+                </div>
+                <div class="empty-state compact" th:unless="${item.latitude != null and item.longitude != null}">
+                    <strong>지도 위치 정보가 없습니다.</strong>
+                    <p>글 작성 시 좌표를 선택하지 않은 게시글입니다.</p>
+                </div>
+
+                <section class="comment-section" th:if="${item.approved}">
+                    <div class="section-heading compact-heading">
+                        <div>
+                            <p class="eyebrow">Comments</p>
+                            <h3>댓글</h3>
+                        </div>
+                        <p class="section-description" th:text="|총 ${#lists.size(item.comments)}개의 댓글|">총 0개의 댓글</p>
+                    </div>
+
+                    <div th:if="${commentDeleteError}" class="error card-error" th:text="${commentDeleteError}"></div>
+                    <div th:if="${commentError}" class="error card-error" th:text="${commentError}"></div>
+
+                    <div class="empty-state compact" th:if="${#lists.isEmpty(item.comments)}">
+                        <strong>아직 댓글이 없습니다.</strong>
+                        <p>추가 정보가 있다면 로그인 후 댓글로 남겨 주세요.</p>
+                    </div>
+
+                    <ul class="comment-list" th:unless="${#lists.isEmpty(item.comments)}">
+                        <li th:each="comment : ${item.comments}" class="comment-card">
+                            <div class="comment-meta">
+                                <strong th:text="${comment.authorName}">작성자</strong>
+                                <div class="comment-meta-actions">
+                                    <span th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</span>
+                                    <form sec:authorize="hasRole('ADMIN')"
+                                          th:action="@{/admin/items/{itemId}/comments/{commentId}/delete(itemId=${item.id}, commentId=${comment.id})}"
+                                          method="post"
+                                          class="inline-form"
+                                          onsubmit="return confirm('이 댓글을 관리자 권한으로 삭제하시겠습니까?');"
+                                          data-single-submit>
+                                        <button type="submit" class="btn btn-danger btn-inline" data-loading-text="삭제 중...">관리자 삭제</button>
+                                    </form>
+                                    <form sec:authorize="isAuthenticated()"
+                                          th:if="${comment.authorUsername != null and comment.authorUsername == #authentication.name}"
+                                          th:action="@{/items/{itemId}/comments/{commentId}/delete(itemId=${item.id}, commentId=${comment.id})}"
+                                          method="post"
+                                          class="inline-form"
+                                          onsubmit="return confirm('내 댓글을 삭제하시겠습니까?');"
+                                          data-single-submit>
+                                        <button type="submit" class="btn btn-secondary btn-inline" data-loading-text="삭제 중...">내 댓글 삭제</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <p th:text="${comment.content}">댓글 내용</p>
+                        </li>
+                    </ul>
+
+                    <div sec:authorize="!isAuthenticated()" class="info-banner">
+                        <strong>댓글 작성은 로그인 후 가능합니다.</strong>
+                        <p>
+                            <a th:href="@{/login(redirect=${'/items/' + item.id})}">로그인</a>
+                            또는
+                            <a th:href="@{/signup(redirect=${'/items/' + item.id})}">회원가입</a>
+                            후 댓글을 남겨 주세요.
+                        </p>
+                    </div>
+
+                    <form sec:authorize="isAuthenticated()"
+                          th:action="@{/items/{id}/comments(id=${item.id})}"
+                          th:object="${commentForm}"
+                          method="post"
+                          class="comment-form"
+                          data-single-submit>
+                        <div class="field-group">
+                            <label>댓글 내용</label>
+                            <textarea th:field="*{content}" rows="4" placeholder="추가 제보나 위치 정보를 댓글로 남겨 주세요."></textarea>
+                            <div th:errors="*{content}" class="error"></div>
+                        </div>
+                        <div class="form-actions comment-action-row">
+                            <button type="submit" class="btn btn-primary" data-loading-text="등록 중...">댓글 등록</button>
+                            <a th:href="@{/items/list}" class="btn btn-secondary">목록으로</a>
+                        </div>
+                    </form>
+                </section>
+
+                <div class="empty-state compact" th:unless="${item.approved}">
+                    <strong>댓글 기능은 승인된 게시글에서만 열립니다.</strong>
+                    <p>승인 이후에는 일반 사용자도 로그인 후 댓글을 남길 수 있습니다.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:if="${item.latitude != null and item.longitude != null}" th:inline="javascript">
+        const lat = [[${item.latitude}]];
+        const lon = [[${item.longitude}]];
+        const map = L.map('map').setView([lat, lon], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        L.marker([lat, lon]).addTo(map);
+    </script>
+</body>
+</html>
