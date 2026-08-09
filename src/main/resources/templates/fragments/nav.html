@@ -1,0 +1,28 @@
+<nav xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     th:fragment="nav"
+     class="navbar">
+    <div class="nav-container">
+        <a class="nav-brand" th:href="@{/}">
+            <img class="brand-logo"
+                 src="https://i.namu.wiki/i/wAsTi6aRV68eLAVgGy_BDTp6nzpaYNo1gnfqhj-BcGlVWQ9dMkmqEImsm4IO8DN-fm31lOZGrLCfLjuBCDHfsQ.svg"
+                 alt="CAU 아이콘" />
+            <span class="brand-text">
+                <strong>캠퍼스 내 분실물 찾기</strong>
+                <small>Chung-Ang University Seoul Campus</small>
+            </span>
+        </a>
+        <ul class="nav-menu">
+            <li><a th:href="@{/items/list}">목록</a></li>
+            <li><a th:href="@{/items/new}">등록하기</a></li>
+            <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/pending}">승인 대기</a></li>
+            <li sec:authorize="!isAuthenticated()"><a th:href="@{/login}">로그인</a></li>
+            <li sec:authorize="!isAuthenticated()"><a th:href="@{/signup}">회원가입</a></li>
+            <li sec:authorize="isAuthenticated()">
+                <form th:action="@{/logout}" method="post" class="logout-form" data-single-submit>
+                    <button type="submit" class="logout-button" data-loading-text="로그아웃 중...">로그아웃</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
