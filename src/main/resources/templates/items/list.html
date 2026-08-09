@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+    <title>캠퍼스 내 분실물 찾기</title>
+</head>
+<body>
+    <th:block th:replace="~{fragments/nav :: nav}"></th:block>
+    <main class="page-shell">
+        <div class="container page-stack">
+            <section class="overview-panel content-card"
+                     th:style="|--searching:${stats.totalCount == 0 ? 0 : stats.searchingCount * 100.0 / stats.totalCount};--found:${stats.totalCount == 0 ? 0 : stats.foundCount * 100.0 / stats.totalCount};--resolved:${stats.totalCount == 0 ? 0 : stats.resolvedCount * 100.0 / stats.totalCount};|">
+                <div class="info-banner" th:if="${postCreateWarning}">
+                    <strong th:text="${postCreateWarning}">이미지 업로드 경고</strong>
+                </div>
+                <div class="overview-layout">
+                    <div class="overview-main">
+                        <div class="overview-copy">
+                            <p class="eyebrow">CAU LOST & FOUND BOARD</p>
+                            <h1>캠퍼스 내 분실물 찾기</h1>
+                            <p class="overview-text">카테고리 별 현재 보관중인 물건과 주인을 찾는 물품을 확인할 수 있습니다.</p>
+                        </div>
+
+                        <form th:action="@{/items/list}" method="get" class="search-form overview-search">
+                            <input type="text" name="q" th:value="${keyword}" placeholder="제목으로 검색해 보세요" />
+                            <select name="itemType">
+                                <option value="">전체 물품 카테고리</option>
+                                <option th:each="itemType : ${itemTypes}"
+                                        th:value="${itemType}"
+                                        th:selected="${selectedItemType == itemType}"
+                                        th:text="${itemType.label}">
+                                    물품 카테고리
+                                </option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">검색</button>
+                        </form>
+
+                        <div class="stat-inline-grid">
+                            <article class="stat-inline-card">
+                                <span class="stat-label">주인 찾는 중</span>
+                                <strong th:text="${stats.searchingCount}">0</strong>
+                                <p>주인 찾는 중인<br>게시글 수</p>
+                            </article>
+                            <article class="stat-inline-card">
+                                <span class="stat-label">보관 중</span>
+                                <strong th:text="${stats.foundCount}">0</strong>
+                                <p>현재 보관 중인 게시글 수</p>
+                            </article>
+                            <article class="stat-inline-card">
+                                <span class="stat-label">반환 완료</span>
+                                <strong th:text="${stats.resolvedCount}">0</strong>
+                                <p>반환이 완료된 게시글 수</p>
+                            </article>
+                        </div>
+                    </div>
+
+                    <aside class="chart-panel">
+                        <div class="donut-chart">
+                            <div class="donut-center">
+                                <strong th:text="${stats.totalCount}">0</strong>
+                                <span>전체 게시글</span>
+                            </div>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <div class="legend-label-wrap"><span class="legend-dot legend-searching"></span><em>주인 찾는 중</em></div>
+                                <strong class="legend-value" th:text="${stats.searchingCount}">0</strong>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-label-wrap"><span class="legend-dot legend-found"></span><em>보관 중</em></div>
+                                <strong class="legend-value" th:text="${stats.foundCount}">0</strong>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-label-wrap"><span class="legend-dot legend-resolved"></span><em>반환 완료</em></div>
+                                <strong class="legend-value" th:text="${stats.resolvedCount}">0</strong>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            <section class="content-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Campus Map</p>
+                        <h2>메인 지도</h2>
+                    </div>
+                    <p class="section-description">현재 페이지에 노출 중인 게시글 중 좌표가 있는 항목을 지도에 표시합니다.</p>
+                </div>
+
+                <div class="map-frame" th:if="${!#lists.isEmpty(mapItems)}">
+                    <div id="list-map" class="map-canvas list-map"></div>
+                </div>
+                <div class="empty-state compact" th:if="${#lists.isEmpty(mapItems)}">
+                    <strong>지도에 표시할 좌표가 없습니다.</strong>
+                    <p>현재 검색 결과에는 좌표가 저장된 게시글이 없습니다.</p>
+                </div>
+            </section>
+
+            <section class="board-grid">
+                <article class="board-card content-card">
+                    <div class="board-header">
+                        <div>
+                            <p class="eyebrow">REPORT BOARD</p>
+                            <h2>분실물 제보 게시판</h2>
+                        </div>
+                        <span class="board-count" th:text="|${reportPageData.totalElements}건|">0건</span>
+                    </div>
+                    <p class="board-description">캠퍼스에서 습득한 물건을 물품 카테고리별로 확인할 수 있습니다.</p>
+
+                    <div class="empty-state compact" th:if="${#lists.isEmpty(reportItems)}">
+                        <strong>등록된 제보 글이 없습니다.</strong>
+                        <p>검색 조건에 맞는 제보 글이 생기면 이 게시판에 표시됩니다.</p>
+                    </div>
+
+                    <ul class="board-list" th:unless="${#lists.isEmpty(reportItems)}">
+                        <li th:each="item : ${reportItems}" class="board-item">
+                            <a th:href="@{/items/{id}(id=${item.id})}" class="board-link">
+                                <div class="board-item-head">
+                                    <div class="badge-row">
+                                        <span class="item-type-pill" th:classappend="${item.itemTypeClass}" th:text="${item.itemTypeLabel}">물품 카테고리</span>
+                                        <span class="status-pill" th:classappend="${item.statusClass}" th:text="${item.statusLabel}">상태</span>
+                                    </div>
+                                    <span class="item-date" th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
+                                </div>
+                                <h3 th:text="${item.title}">게시글 제목</h3>
+                                <p th:text="${item.locationName}">위치 설명</p>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <nav class="board-pagination" th:if="${reportPageData.totalPages > 1}">
+                        <span class="page-link disabled" th:unless="${reportPageData.hasPrevious()}">이전</span>
+                        <a class="page-link"
+                           th:if="${reportPageData.hasPrevious()}"
+                           th:href="@{/items/list(q=${keyword}, itemType=${selectedItemType}, reportPage=${reportPageData.number - 1}, searchPage=${searchPageData.number})}">이전</a>
+
+                        <th:block th:each="pageNumber : ${#numbers.sequence(0, reportPageData.totalPages - 1)}">
+                            <span class="page-link active" th:if="${pageNumber == reportPageData.number}" th:text="${pageNumber + 1}">1</span>
+                            <a class="page-link"
+                               th:unless="${pageNumber == reportPageData.number}"
+                               th:href="@{/items/list(q=${keyword}, itemType=${selectedItemType}, reportPage=${pageNumber}, searchPage=${searchPageData.number})}"
+                               th:text="${pageNumber + 1}">1</a>
+                        </th:block>
+
+                        <span class="page-link disabled" th:unless="${reportPageData.hasNext()}">다음</span>
+                        <a class="page-link"
+                           th:if="${reportPageData.hasNext()}"
+                           th:href="@{/items/list(q=${keyword}, itemType=${selectedItemType}, reportPage=${reportPageData.number + 1}, searchPage=${searchPageData.number})}">다음</a>
+                    </nav>
+                </article>
+
+                <article class="board-card content-card board-card-search">
+                    <div class="board-header">
+                        <div>
+                            <p class="eyebrow">SEARCH BOARD</p>
+                            <h2>분실물 찾기 게시판</h2>
+                        </div>
+                        <span class="board-count" th:text="|${searchPageData.totalElements}건|">0건</span>
+                    </div>
+                    <p class="board-description">잃어버린 물건을 물품 카테고리별로 나눠서 확인할 수 있습니다.</p>
+
+                    <div class="empty-state compact" th:if="${#lists.isEmpty(searchItems)}">
+                        <strong>등록된 찾기 글이 없습니다.</strong>
+                        <p>검색 조건에 맞는 찾기 글이 생기면 이 게시판에 표시됩니다.</p>
+                    </div>
+
+                    <ul class="board-list" th:unless="${#lists.isEmpty(searchItems)}">
+                        <li th:each="item : ${searchItems}" class="board-item">
+                            <a th:href="@{/items/{id}(id=${item.id})}" class="board-link">
+                                <div class="board-item-head">
+                                    <div class="badge-row">
+                                        <span class="item-type-pill" th:classappend="${item.itemTypeClass}" th:text="${item.itemTypeLabel}">물품 카테고리</span>
+                                        <span class="status-pill" th:classappend="${item.statusClass}" th:text="${item.statusLabel}">상태</span>
+                                    </div>
+                                    <span class="item-date" th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
+                                </div>
+                                <h3 th:text="${item.title}">게시글 제목</h3>
+                                <p th:text="${item.locationName}">위치 설명</p>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <nav class="board-pagination" th:if="${searchPageData.totalPages > 1}">
+                        <span class="page-link disabled" th:unless="${searchPageData.hasPrevious()}">이전</span>
+                        <a class="page-link"
+                           th:if="${searchPageData.hasPrevious()}"
+                           th:href="@{/items/list(q=${keyword}, itemType=${selectedItemType}, reportPage=${reportPageData.number}, searchPage=${searchPageData.number - 1})}">이전</a>
+
+                        <th:block th:each="pageNumber : ${#numbers.sequence(0, searchPageData.totalPages - 1)}">
+                            <span class="page-link active" th:if="${pageNumber == searchPageData.number}" th:text="${pageNumber + 1}">1</span>
+                            <a class="page-link"
+                               th:unless="${pageNumber == searchPageData.number}"
+                               th:href="@{/items/list(q=${keyword}, itemType=${selectedItemType}, reportPage=${reportPageData.number}, searchPage=${pageNumber})}"
+                               th:text="${pageNumber + 1}">1</a>
+                        </th:block>
+
+                        <span class="page-link disabled" th:unless="${searchPageData.hasNext()}">다음</span>
+                        <a class="page-link"
+                           th:if="${searchPageData.hasNext()}"
+                           th:href="@{/items/list(q=${keyword}, itemType=${selectedItemType}, reportPage=${reportPageData.number}, searchPage=${searchPageData.number + 1})}">다음</a>
+                    </nav>
+                </article>
+            </section>
+        </div>
+    </main>
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <script th:if="${!#lists.isEmpty(mapItems)}" th:inline="javascript">
+        const defaultCenter = [37.5052, 126.9571];
+        const mapItems = [
+            /*[# th:each="item : ${mapItems}"]*/
+            {
+                id: [[${item.id}]],
+                title: [[${item.title}]],
+                locationName: [[${item.locationName}]],
+                itemTypeLabel: [[${item.itemTypeLabel}]],
+                statusLabel: [[${item.statusLabel}]],
+                latitude: [[${item.latitude}]],
+                longitude: [[${item.longitude}]],
+                markerColor: [[${item.itemTypeMarkerColor}]],
+                detailUrl: [[@{/items/{id}(id=${item.id})}]]
+            },
+            /*[/]*/
+        ];
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        const listMap = L.map('list-map').setView(defaultCenter, 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(listMap);
+
+        const markers = [];
+        mapItems.forEach((item) => {
+            if (item.latitude == null || item.longitude == null) {
+                return;
+            }
+
+            const marker = L.circleMarker([item.latitude, item.longitude], {
+                radius: 10,
+                color: item.markerColor,
+                weight: 2,
+                fillColor: item.markerColor,
+                fillOpacity: 0.75
+            }).addTo(listMap);
+
+            marker.bindPopup(`
+                <div class="map-popup">
+                    <strong>${escapeHtml(item.title)}</strong><br>
+                    <span>${escapeHtml(item.itemTypeLabel)} · ${escapeHtml(item.statusLabel)}</span><br>
+                    <span>${escapeHtml(item.locationName)}</span><br>
+                    <a href="${escapeHtml(item.detailUrl)}">상세 보기</a>
+                </div>
+            `);
+            markers.push(marker);
+        });
+
+        if (markers.length === 1) {
+            listMap.setView(markers[0].getLatLng(), 17);
+        } else if (markers.length > 1) {
+            listMap.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
+        }
+    </script>
+</body>
+</html>
